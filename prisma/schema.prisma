@@ -1,7 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
   provider = "prisma-client"
@@ -13,20 +12,22 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String?
-  avatar    String?
+  id     String  @id @default(uuid())
+  email  String  @unique
+  name   String?
+  avatar String?
 
-  isActive  Boolean  @default(true)
+  isActive Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // relations
   authAccounts        AuthAccount[]
-  organizationMembers OrganizationMember[]  
+  organizationMembers OrganizationMember[]
+  projectMembers      ProjectMember[]
   sessions            AuthSession[]
+  invites              Invitation[] 
 
   @@index([email])
 }
@@ -35,12 +36,12 @@ model AuthAccount {
   id String @id @default(uuid())
 
   userId String
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  provider      AuthProvider
-  providerId    String?     // google sub OR email
+  provider   AuthProvider
+  providerId String? // google sub OR email
 
-  passwordHash  String?     // for EMAIL_PASSWORD
+  passwordHash String? // for EMAIL_PASSWORD
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -53,7 +54,7 @@ model AuthSession {
   id String @id @default(uuid())
 
   userId String
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   refreshToken String @unique
 
@@ -66,6 +67,20 @@ model AuthSession {
   @@index([userId])
 }
 
+model OtpCode {
+  id        String   @id @default(uuid())
+  email     String
+  codeHash  String           // store hashed, never plaintext
+  purpose   OtpPurpose
+  expiresAt DateTime
+  usedAt    DateTime?        // null = not yet used
+  createdAt DateTime @default(now())
+
+  @@index([email, purpose])
+}
+
+
+
 model Organization {
   id        String   @id @default(uuid())
   name      String
@@ -73,14 +88,18 @@ model Organization {
 
   members  OrganizationMember[]
   projects Project[]
+  invites  Invitation[]
+
+  deletedAt DateTime?
+
 }
 
 model OrganizationMember {
-  id             String   @id @default(uuid())
-  role           Role     @default(VIEWER)
-  userId         String
-  organizationId String
-  createdAt      DateTime @default(now())
+  id               String           @id @default(uuid())
+  organizationRole OrganizationRole @default(MEMBER)
+  userId           String
+  organizationId   String
+  createdAt        DateTime         @default(now())
 
   user         User         @relation(fields: [userId], references: [id])
   organization Organization @relation(fields: [organizationId], references: [id])
@@ -95,6 +114,64 @@ model Project {
   createdAt      DateTime @default(now())
 
   organization Organization @relation(fields: [organizationId], references: [id])
+  members      ProjectMember[]
+  invites       InvitationProject[]
+
+  deletedAt DateTime?
+}
+
+model ProjectMember {
+  id        String @id @default(uuid())
+  projectId String
+  userId    String
+  projectRole      ProjectRole @default(VIEWER)
+
+  project Project @relation(fields: [projectId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@unique([projectId, userId])
+}
+
+model Invitation {
+  id String @id @default(uuid())
+
+  email String
+
+  organizationId String
+  invitedById    String
+
+  token String @unique
+
+  status InvitationStatus @default(PENDING)
+  expiresAt DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // relations
+  organization Organization @relation(fields: [organizationId], references: [id])
+  invitedBy    User         @relation(fields: [invitedById], references: [id])
+
+  // 👇 NEW
+  orgRole OrganizationRole @default(MEMBER)
+
+  projectInvites InvitationProject[]
+
+  @@index([email])
+}
+
+model InvitationProject {
+  id String @id @default(uuid())
+
+  invitationId String
+  projectId    String
+
+  role ProjectRole @default(VIEWER)
+
+  invitation Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  project    Project    @relation(fields: [projectId], references: [id])
+
+  @@unique([invitationId, projectId])
 }
 
 enum AuthProvider {
@@ -103,9 +180,27 @@ enum AuthProvider {
   EMAIL_OTP
 }
 
-enum Role {
+enum OrganizationRole {
   OWNER
   ADMIN
-  VIEWER
+  MEMBER
+}
+
+enum ProjectRole {
+  OWNER
+  ADMIN
   ANALYST
+  VIEWER
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+enum OtpPurpose {
+  LOGIN
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
 }

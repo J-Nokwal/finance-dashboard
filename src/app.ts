@@ -1,8 +1,11 @@
-import express from "express";
-import userRoutes from "./routes/user.routes";
+import express, { Router } from "express";
+import userRoutes from "./modules/user/user.routes";
+import authRoutes from "./modules/auth/auth.routes";
+import organizationRoutes from "./modules/organization/organization.routes";
+import invitationRoutes from "./modules/invitation/invitation.routes";
 import cors from "cors";
 import swaggerUi from "swagger-ui-express";
-import { swaggerSpec } from "./config/swagger";
+import { swaggerSpec } from "./core/config/swagger";
 const app = express();
 
 app.use(cors());
@@ -28,9 +31,12 @@ app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.get("/health", (req, res) => {
   res.json({ status: "OK" });
 });
+const apiRouter = Router();
+app.use("/api",apiRouter);
 
-
-app.use("/api/users", userRoutes);
-
+apiRouter.use("/auth", authRoutes);
+apiRouter.use("/users", userRoutes);
+apiRouter.use("/organizations",organizationRoutes);
+apiRouter.use("/invitations", invitationRoutes);
 
 export default app;
