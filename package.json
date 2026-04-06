@@ -7,7 +7,8 @@
     "build": "tsc",
     "start": "node dist/src/server.js",
     "lint": "eslint",
-    "test": "node --experimental-vm-modules node_modules/.bin/jest"
+    "test": "node --experimental-vm-modules node_modules/.bin/jest",
+    "generate:prisma": "prisma generate"
   },
   "keywords": [],
   "author": "",

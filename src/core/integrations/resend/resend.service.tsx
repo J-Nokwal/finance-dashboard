@@ -4,6 +4,9 @@ import { EmailVerificationOtp } from "./templates/EmailVerificationOtp";
 import { PasswordResetOtp } from "./templates/PasswordResetOtp";
 import { LoginOtp } from "./templates/LoginOtp";
 import { resend } from "./resend.client";
+import { OrganizationDeletionOtp } from "./templates/OrganizationDeletionOtp";
+import { OrganizationInvitationEmail } from "./templates/OrganizationInvitationEmail";
+import { InvitationWithProjects } from "@/src/modules/organization/organisation.types";
 
 type SendEmailOptions = {
   to: string | string[];
@@ -11,7 +14,7 @@ type SendEmailOptions = {
   react: React.ReactElement;
 };
 
-export const sendEmail = async ({ to, subject, react }: SendEmailOptions) => {
+const sendEmail = async ({ to, subject, react }: SendEmailOptions) => {
   try {
     const response = await resend.emails.send({
       from: `Finance Dashboard <${process.env.RESEND_SENDER_EMAIL}>`,
@@ -26,7 +29,7 @@ export const sendEmail = async ({ to, subject, react }: SendEmailOptions) => {
   }
 };
 
-export const sendLoginOtpEmail = async (email: string, otp: string) => {
+const sendLoginOtpEmail = async (email: string, otp: string) => {
   const reactNode = (
     <LoginOtp
       otp={otp}
@@ -41,7 +44,7 @@ export const sendLoginOtpEmail = async (email: string, otp: string) => {
   });
 };
 
-export const sendEmailVerificationOtp = async (
+const sendEmailVerificationOtp = async (
   email: string,
   otp: string
 ) => {
@@ -58,7 +61,7 @@ export const sendEmailVerificationOtp = async (
   });
 };
 
-export const sendPasswordResetOtp = async (
+const sendPasswordResetOtp = async (
   email: string,
   otp: string
 ) => {
@@ -75,7 +78,7 @@ export const sendPasswordResetOtp = async (
   });
 };
 
-export const sendRegistrationSuccessEmail = async (
+const sendRegistrationSuccessEmail = async (
   email: string,
   name: string
 ) => {
@@ -92,9 +95,41 @@ export const sendRegistrationSuccessEmail = async (
   });
 };
 
+const sendOrgDeletionOtp = async (email: string, otp: string, organizationName: string) => {
+  return sendEmail({
+    to: email,
+    subject: "Organization Deletion OTP",
+    react: (
+      <OrganizationDeletionOtp
+        otp={otp}
+        organizationName="Finance Dashboard"
+        userOrganizationName={organizationName}
+        supportEmail={process.env.RESEND_SUPPORT_EMAIL??""}
+      />
+    ),
+  });
+}
+
+const sendOrganizationInvitationEmail = async (email: string, organizationName: string, invitation: InvitationWithProjects) => {
+  return sendEmail({
+    to: email,
+    subject: `Invitation to join ${organizationName} on Finance Dashboard`,
+    react: (
+      <OrganizationInvitationEmail
+        organizationName={"Finance Dashboard"}
+        userOrganizationName={organizationName}
+        supportEmail={process.env.RESEND_SUPPORT_EMAIL??""}
+        invitation={invitation}
+      />
+    ),
+  });
+}
+
 export default {
   sendLoginOtpEmail,
   sendEmailVerificationOtp,
   sendPasswordResetOtp,
   sendRegistrationSuccessEmail,
+  sendOrgDeletionOtp,
+sendOrganizationInvitationEmail
 };

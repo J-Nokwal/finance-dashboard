@@ -7,7 +7,7 @@ import { AuthContext, SendOtpResponse, SessionData } from "./auth.types";
 import { OAuth2Client } from "google-auth-library";
 import bcrypt from "bcrypt";
 import resendService from "../../core/integrations/resend/resend.service";
-
+import random  from "@/src/utils/random";
 const SALT_ROUNDS = 12; // cost factor — higher = slower = safer
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -158,15 +158,11 @@ export async function loginWithEmailPassword(
     jwt,
   };
 }
-function generateOtp(): string {
-  return crypto.randomInt(0, 1_000_000).toString().padStart(6, "0"); // 6 digits
-}
 
-function hashOtp(otp: string): string {
-  return crypto.createHash("sha256").update(otp).digest("hex");
-}
+
+
 export async function sendLoginOtp(email: string): Promise<SendOtpResponse> {
-  const otp = generateOtp();
+  const otp = random.generateOtp();
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
   // Invalidate any previous unused OTPs for this email
@@ -183,7 +179,7 @@ export async function sendLoginOtp(email: string): Promise<SendOtpResponse> {
   const otpRecord = await prisma.otpCode.create({
     data: {
       email,
-      codeHash: hashOtp(otp),
+      codeHash: random.hashOtp(otp),
       purpose: OtpPurpose.LOGIN,
       expiresAt,
     },
@@ -203,7 +199,7 @@ export async function loginWithEmailOtp(
   const record = await prisma.otpCode.findFirst({
     where: {
       id: otpId, 
-      codeHash: hashOtp(otp),
+      codeHash: random.hashOtp(otp),
       purpose: OtpPurpose.LOGIN,
       usedAt: null,
       expiresAt: { gt: new Date() },
@@ -288,7 +284,7 @@ async function createSession(
   userId: string,
   context: AuthContext,
 ): Promise<{ refreshToken: string , sessionId: string}> {
-  const refreshToken = crypto.randomBytes(32).toString("hex");
+  const refreshToken = random.generateRandomToken(64);
  const session = await prisma.authSession.create({
     data: {
       userId,

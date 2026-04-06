@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import prisma from "../config/prisma";
-import { JwtAccessPayload } from "../types/middleware.types";
+import { JwtAccessPayload, UserAccessContext } from "../types/middleware.types";
 
 
 
@@ -35,9 +35,10 @@ export function requireAuth(
       process.env.JWT_SECRET as string
     ) as JwtAccessPayload;
 
-
-    req.userId =  payload.sub as string;
-    req.sessionId = payload.jti as string;
+    req.userAccessContext= {
+      userId: payload.sub,
+      sessionId: payload.jti
+    }
 
     next();
   } catch (err) {
@@ -59,20 +60,29 @@ export function requireAuth(
 }
 
 export async function requireSession(
-  req: Request,
+  req: Request ,
   res: Response,
   next: NextFunction
 ): Promise<void> {
+  if (req.userAccessContext === undefined) {
+    res.status(401).json({
+      success: false,
+      message: "Session is invalid or has been revoked. Add requireAuth middleware first.",
+      code: "SESSION_INVALID",
+    });
+    return;
+  }
+
   try {
     const session = await prisma.authSession.findUnique({
-      where: { id: req.sessionId },
+      where: { id: req.userAccessContext.sessionId },
       select: {
         userId: true,
         expiresAt: true,
       },
     });
  
-    if (!session || session.userId !== req.userId) {
+    if (!session || session.userId !== req.userAccessContext.userId) {
       res.status(401).json({
         success: false,
         message: "Session is invalid or has been revoked.",
@@ -81,7 +91,7 @@ export async function requireSession(
       return;
     }
  
-    if (session.expiresAt < new Date()) {
+    if (session.expiresAt < new Date() ) {
       res.status(401).json({
         success: false,
         message: "Session has expired. Please log in again.",

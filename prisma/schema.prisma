@@ -85,6 +85,7 @@ model Organization {
   id        String   @id @default(uuid())
   name      String
   createdAt DateTime @default(now())
+  description String?
 
   members  OrganizationMember[]
   projects Project[]
@@ -198,9 +199,12 @@ enum InvitationStatus {
   ACCEPTED
   DECLINED
   EXPIRED
+  REVOKED
 }
 enum OtpPurpose {
   LOGIN
   EMAIL_VERIFICATION
   PASSWORD_RESET
+  DELETE_ORGANIZATION
+  DELETE_PROJECT
 }

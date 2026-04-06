@@ -14,7 +14,7 @@ import {
   sendEmailOtpSchema,
   verifyEmailOtpSchema,
   refreshTokenSchema,
-} from "./auth.validation";
+} from "./auth.validations";
 import { Request, Response } from "express";
 import { z } from "zod";
 

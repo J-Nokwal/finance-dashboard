@@ -1,14 +1,23 @@
 import { Request, Response, NextFunction } from "express";
 import prisma from "../config/prisma";
 import { getEffectiveRole } from "../rbac/resolver";
+import { ProjectRequest } from "../types/middleware.types";
 
 // function loadProjectAccessContext
-async function loadProjectAccessContext(
-  req: Request,
+export async function loadProjectAccessContext(
+  req: ProjectRequest,
   res: Response,
   next: NextFunction,
 ) {
-  const userId = req.userId;
+  if (req.userAccessContext === undefined) {
+    res.status(401).json({
+      success: false,
+      message: "Session is invalid or has been revoked. Add requireAuth middleware first.",
+      code: "SESSION_INVALID",
+    });
+    return;
+  }
+  const userId = req.userAccessContext.userId;
   const { projectId } = req.params;
   if (projectId && typeof projectId !== "string") {
     res.status(400).json({
@@ -71,10 +80,11 @@ async function loadProjectAccessContext(
     projectMembership.projectRole,
   );
 
-  req.project = project;
-  req.projectId = projectId;
-  req.organizationId = project.organizationId;
-  req.effectiveRole = effectiveRole;
-
+  req.projectAccessContext = {
+    project,
+    projectId,
+    effectiveRole,
+    organizationId: project.organizationId,
+  };
   next();
 }

@@ -1,0 +1,35 @@
+{
+  "scope": "Workspace",
+  "tasks": {
+    "fN-yqWrjgNFvV2w2LdoNh": {
+      "id": "fN-yqWrjgNFvV2w2LdoNh",
+      "description": "Pagination not implemented yet\n",
+      "columnId": "column-todo"
+    },
+    "9eDDfpfwx6eJEDo-mD18q": {
+      "id": "9eDDfpfwx6eJEDo-mD18q",
+      "description": "can role to member on project level update \nit should include \norg owner/adminn can do anything to project\nQuestions \ncan project admin add another admin \nhow this works\nif can then one admin can add or remove admin at project level \nso conflict happens ",
+      "columnId": "column-todo"
+    }
+  },
+  "columns": [
+    {
+      "id": "column-todo",
+      "title": "To do",
+      "tasksIds": [
+        "fN-yqWrjgNFvV2w2LdoNh",
+        "9eDDfpfwx6eJEDo-mD18q"
+      ]
+    },
+    {
+      "id": "column-doing",
+      "title": "Doing",
+      "tasksIds": []
+    },
+    {
+      "id": "column-done",
+      "title": "Done",
+      "tasksIds": []
+    }
+  ]
+}

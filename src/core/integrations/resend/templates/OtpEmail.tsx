@@ -22,7 +22,7 @@ export function OtpEmail({
   return (
     <BaseEmail previewText={title}>
       <EmailTitle
-        logoUrl="https://your-logo-url.com/logo.png"
+        logoUrl="https://www.jagritnokwal.com/images/finance-dashboard-logo.png"
         organizationName={organizationName}
         title={title}
       />
