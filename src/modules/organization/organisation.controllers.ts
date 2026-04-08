@@ -1,12 +1,14 @@
 import { Request, Response } from "express";
 import {
-  changeOrgMemberRoleParamSchema,
-  changeOrgMemberRoleSchema,
+  createOrganizationProjectSchema,
   createOrganizationSchema,
   deleteOrganizationSchema,
+  deleteOrgProjectParamSchema,
   inviteOrganizationMemberSchema,
   listOrganizationInvitationsQuerySchema,
   removeOrgMemberParamSchema,
+  resendOrgInvitationParamSchema,
+  revokeOrgInvitationParamSchema,
   updateOrganizationMemberSchema,
   updateOrganizationSchema,
   updateOrgMemberParamSchema,
@@ -14,19 +16,23 @@ import {
 import { z } from "zod";
 import {
   createOrganization,
+  createOrgProject,
   deleteOrganization,
+  deleteOrgProject,
   generateOrgDeletionOtp,
+  getAllOrgProjects,
   getOrganization,
   inviteOrgMember,
   listOrganizations,
   listOrgInvitations,
   listOrgMembers,
   removeOrgMember,
+  resendOrgInvitationEmail,
+  revokeOrgInvitation,
   updateOrganization,
   updateOrgMember,
 } from "./organisation.services";
-import { OrganizationUserContext } from "./organisation.types";
-import { OrganizationRole } from "@/generated/prisma/enums";
+import { OrganizationContext } from "./organisation.types";
 
 // Organization
 export const createOrganizationController = async (
@@ -135,8 +141,6 @@ export const updateOrgMemberController = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
-  const { organizationId, effectiveRole } = req.organizationAccessContext!;
-  const { userId: currentUserId } = req.userAccessContext!;
   const paramsResult = updateOrgMemberParamSchema.safeParse(req.params);
   if (!paramsResult.success) {
     res.status(400).json({ errors: z.treeifyError(paramsResult.error) });
@@ -151,16 +155,15 @@ export const updateOrgMemberController = async (
     res.status(400).json({ message: "Invalid request" });
     return;
   }
-  const crrOrgUserContext: OrganizationUserContext = {
-    organizationId,
-    currentUserId: currentUserId,
-    effectiveRole: effectiveRole as OrganizationRole,
-  };
+ 
+  const organizationContext: OrganizationContext = {
+    userAccessContext: req.userAccessContext!,
+    organizationAccessContext: req.organizationAccessContext!,
+  }
   const updatedMember = await updateOrgMember(
-    organizationId,
     bodyResult.data.userId,
     bodyResult.data.role,
-    crrOrgUserContext,
+    organizationContext,
   );
   res
     .status(200)
@@ -171,55 +174,24 @@ export const removeOrgMemberController = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
-  const { organizationId, effectiveRole } = req.organizationAccessContext!;
-  const { userId: currentUserId } = req.userAccessContext!;
   const paramsResult = removeOrgMemberParamSchema.safeParse(req.params);
   if (!paramsResult.success) {
     res.status(400).json({ errors: z.treeifyError(paramsResult.error) });
     return;
   }
-  const crrOrgUserContext: OrganizationUserContext = {
-    organizationId,
-    currentUserId: currentUserId,
-    effectiveRole: effectiveRole as OrganizationRole,
-  };
-  const removedMember = await removeOrgMember(
-    organizationId,
+  
+  const organizationContext: OrganizationContext = {
+    userAccessContext: req.userAccessContext!,
+    organizationAccessContext: req.organizationAccessContext!,
+  }
+
+   await removeOrgMember(
     paramsResult.data.userId,
-    crrOrgUserContext,
+    organizationContext,
   );
   res.status(200).json({ message: "Member removed successfully" });
 };
 
-// Role Management
-export const changeOrgMemberRoleController = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
-  const { organizationId, effectiveRole } = req.organizationAccessContext!;
-  const { userId: currentUserId } = req.userAccessContext!;
-  const paramsResult = changeOrgMemberRoleParamSchema.safeParse(req.params);
-  if (!paramsResult.success) {
-    res.status(400).json({ errors: z.treeifyError(paramsResult.error) });
-    return;
-  }
-  const bodyResult = changeOrgMemberRoleSchema.safeParse(req.body);
-  if (!bodyResult.success) {
-    res.status(400).json({ errors: z.treeifyError(bodyResult.error) });
-    return;
-  }
-  const crrOrgUserContext: OrganizationUserContext = {
-    organizationId,
-    currentUserId: currentUserId,
-    effectiveRole: effectiveRole as OrganizationRole,
-  };
-  const updatedMember = await updateOrgMember(
-    organizationId,
-    paramsResult.data.userId,
-    bodyResult.data.role,
-    crrOrgUserContext,
-  );
-};
 
 // Invitations
 export const listOrgInvitationsController = async (
@@ -247,24 +219,19 @@ export const inviteOrgMemberController = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
-  const { organizationId, effectiveRole } = req.organizationAccessContext!;
-  const { userId: currentUserId } = req.userAccessContext!;
   const bodyResult = inviteOrganizationMemberSchema.safeParse(req.body);
   if (!bodyResult.success) {
     res.status(400).json({ errors: z.treeifyError(bodyResult.error) });
     return;
   }
-  const crrOrgUserContext: OrganizationUserContext = {
-    organizationId,
-    currentUserId: currentUserId,
-    effectiveRole: effectiveRole as OrganizationRole,
-  };
+    const organizationContext: OrganizationContext = {
+    userAccessContext: req.userAccessContext!,
+    organizationAccessContext: req.organizationAccessContext!,
+  }
   const invitedMember = await inviteOrgMember(
-    organizationId,
     bodyResult.data.email,
     bodyResult.data.role,
-    currentUserId,
-    crrOrgUserContext,
+    organizationContext,
     bodyResult.data.projectInvitations,
   );
   res.status(200).json(invitedMember);
@@ -273,20 +240,86 @@ export const inviteOrgMemberController = async (
 export const revokeOrgInvitationController = async (
   req: Request,
   res: Response,
-): Promise<void> => {};
+): Promise<void> => {
+  const paramsResult = revokeOrgInvitationParamSchema.safeParse(req.params);
+  if (!paramsResult.success) {
+    res.status(400).json({ errors: z.treeifyError(paramsResult.error) });
+    return;
+  }
+  const organizationContext: OrganizationContext = {
+    userAccessContext: req.userAccessContext!,
+    organizationAccessContext: req.organizationAccessContext!,
+  }
+  await revokeOrgInvitation(
+    paramsResult.data.invitationId,
+    organizationContext,
+  );
+  res.status(200).json({ message: "Invitation revoked successfully" });
+};
 
 export const resendOrgInvitationController = async (
   req: Request,
   res: Response,
-): Promise<void> => {};
+): Promise<void> => {
+  const paramsResult = resendOrgInvitationParamSchema.safeParse(req.params);
+  if (!paramsResult.success) {
+    res.status(400).json({ errors: z.treeifyError(paramsResult.error) });
+    return;
+  }
+  const organizationContext: OrganizationContext = {
+    userAccessContext: req.userAccessContext!,
+    organizationAccessContext: req.organizationAccessContext!,
+  }
+  await resendOrgInvitationEmail(
+    paramsResult.data.invitationId,
+    organizationContext,
+  );
+  res.status(200).json({ message: "Invitation resent successfully" });
+};
 
 // Projects
 export const listOrgProjectsController = async (
   req: Request,
   res: Response,
-): Promise<void> => {};
+): Promise<void> => {
+  const organizationContext: OrganizationContext ={
+    organizationAccessContext: req.organizationAccessContext!,
+    userAccessContext: req.userAccessContext!,
+  };
+  const projects = await getAllOrgProjects(organizationContext);
+  res.status(200).json(projects);
+};
 
 export const createOrgProjectController = async (
   req: Request,
   res: Response,
-): Promise<void> => {};
+): Promise<void> => {
+  const organizationContext: OrganizationContext = {
+    userAccessContext: req.userAccessContext!,
+    organizationAccessContext: req.organizationAccessContext!,
+  }
+  const bodyResult = createOrganizationProjectSchema.safeParse(req.body);
+  if (!bodyResult.success) {
+    res.status(400).json({ errors: z.treeifyError(bodyResult.error) });
+    return;
+  }
+  const project = await createOrgProject(bodyResult.data.name,organizationContext);
+  res.status(201).json(project);
+};
+
+export const deleteOrgProjectController = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const paramsResult = deleteOrgProjectParamSchema.safeParse(req.params);
+  if (!paramsResult.success) {
+    res.status(400).json({ errors: z.treeifyError(paramsResult.error) });
+    return;
+  }
+  const organizationContext: OrganizationContext = {
+    userAccessContext: req.userAccessContext!,
+    organizationAccessContext: req.organizationAccessContext!,
+  }
+  await deleteOrgProject(paramsResult.data.projectId,organizationContext);
+  res.status(200).json({ message: "Project deleted successfully" });
+};

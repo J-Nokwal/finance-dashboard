@@ -8,7 +8,6 @@ import {
   listOrgMembersController,
   updateOrgMemberController,
   removeOrgMemberController,
-  changeOrgMemberRoleController,
   listOrgInvitationsController,
   inviteOrgMemberController,
   revokeOrgInvitationController,
@@ -16,14 +15,15 @@ import {
   listOrgProjectsController,
   createOrgProjectController,
   requestOrgDeletionOtpController,
+  deleteOrgProjectController,
 } from "./organisation.controllers";
 import {
   requireAuth,
   requireSession,
 } from "@/src/core/middleware/auth.middleware";
 import { loadOrganizationAccessContext } from "@/src/core/middleware/organization.middleware";
-import { requireRole } from "@/src/core/middleware/rbac.middleware";
 import { OrganizationRole } from "@/generated/prisma/enums";
+import { requireOrgRole } from "@/src/core/middleware/rbac.middleware";
 
 const router = Router(); // Base: /organizations
 
@@ -41,7 +41,7 @@ router.patch(
   requireAuth,
   requireSession,
   loadOrganizationAccessContext,
-  requireRole([OrganizationRole.OWNER,OrganizationRole.ADMIN]),
+  requireOrgRole(OrganizationRole.ADMIN),
   updateOrganizationController,
 );
 router.post(
@@ -49,7 +49,7 @@ router.post(
   requireAuth,
   requireSession,
   loadOrganizationAccessContext,
-  requireRole([OrganizationRole.OWNER]),
+  requireOrgRole(OrganizationRole.OWNER),
   requestOrgDeletionOtpController,
 );
 router.delete(
@@ -57,7 +57,7 @@ router.delete(
   requireAuth,
   requireSession,
   loadOrganizationAccessContext,
-  requireRole([OrganizationRole.OWNER]),
+  requireOrgRole(OrganizationRole.OWNER),
   deleteOrganizationController,
 );
 
@@ -66,7 +66,6 @@ router.get(
   "/:orgId/members",
   requireAuth,
   loadOrganizationAccessContext,
-  requireRole([OrganizationRole.OWNER,OrganizationRole.ADMIN]),
   listOrgMembersController,
 );
 router.patch(
@@ -74,7 +73,7 @@ router.patch(
   requireAuth,
   requireSession,
   loadOrganizationAccessContext,
-  requireRole([OrganizationRole.OWNER,OrganizationRole.ADMIN]),
+  requireOrgRole(OrganizationRole.ADMIN),
   updateOrgMemberController,
 );
 router.delete(
@@ -82,17 +81,8 @@ router.delete(
   requireAuth,
   requireSession,
   loadOrganizationAccessContext,
-  requireRole([OrganizationRole.OWNER,OrganizationRole.ADMIN]),
+  requireOrgRole(OrganizationRole.ADMIN),
   removeOrgMemberController,
-);
-
-// Role Management
-router.patch(
-  "/:orgId/members/:userId/role",
-  requireAuth,
-  loadOrganizationAccessContext,
-  requireRole([OrganizationRole.OWNER]),
-  changeOrgMemberRoleController,
 );
 
 // Invitations
@@ -100,14 +90,14 @@ router.get(
   "/:orgId/invitations",
   requireAuth,
   loadOrganizationAccessContext,
-  requireRole([OrganizationRole.OWNER,OrganizationRole.ADMIN]),
+  requireOrgRole(OrganizationRole.ADMIN),
   listOrgInvitationsController,
 );
 router.post(
   "/:orgId/invitations",
   requireAuth,
   loadOrganizationAccessContext,
-  requireRole([OrganizationRole.OWNER,OrganizationRole.ADMIN]),
+  requireOrgRole(OrganizationRole.ADMIN),
   inviteOrgMemberController,
 );
 router.delete(
@@ -123,7 +113,6 @@ router.post(
   loadOrganizationAccessContext,
   resendOrgInvitationController,
 );
-
 // Projects
 router.get(
   "/:orgId/projects",
@@ -135,6 +124,14 @@ router.post(
   "/:orgId/projects",
   requireAuth,
   loadOrganizationAccessContext,
+  requireOrgRole(OrganizationRole.ADMIN),
   createOrgProjectController,
 );
+router.delete(
+  "/:orgId/projects/:projectId",
+  requireAuth,
+  loadOrganizationAccessContext,
+  requireOrgRole(OrganizationRole.ADMIN),
+  deleteOrgProjectController,
+)
 export default router;

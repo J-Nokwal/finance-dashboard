@@ -1,24 +1,49 @@
-import { Request, Response, NextFunction } from "express";
-import { EffectiveRole, rolePriority } from "../rbac/rbac";
+import { Request,Response, NextFunction } from "express";
+import { OrganizationRole, ProjectRole } from "@/generated/prisma/enums";
 
-export function requireRole(allowedRoles: EffectiveRole | EffectiveRole[]) {
-  return (req: Request,
-    res: Response,
-    next: NextFunction,) => {
-    const userRole = req.effectiveRole;
+export function requireProjectRole(minimum: ProjectRole) {
+  const hierarchy: Record<ProjectRole, number> = {
+    ADMIN:   2,
+    MEMBER: 1,
+  };
 
-    if (!userRole) {
-      return res.status(403).json({ message: "No role found" });
+  return (req: Request, res: Response, next: NextFunction) => {
+    const effectiveRole = req.projectAccessContext?.effectiveRole;
+
+    if (!effectiveRole) {
+      res.status(403).json({ success: false, message: "No project access.", code: "PROJECT_ACCESS_FORBIDDEN" });
+      return;
     }
-    const allowedRolesArray = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
 
-    const hasAccess = allowedRolesArray.some(
-      (role) => rolePriority[userRole] >= rolePriority[role]
-    );
-
-    if (!hasAccess) {
-      return res.status(403).json({ message: "Forbidden" });
+    if (hierarchy[effectiveRole] >= hierarchy[minimum]) {
+      next();
+      return;
     }
-    next();
+
+    res.status(403).json({ success: false, message: "Insufficient permissions.", code: "FORBIDDEN" });
+  };
+}
+
+export function requireOrgRole(minimum: OrganizationRole) {
+  const hierarchy: Record<OrganizationRole, number> = {
+    OWNER: 3,
+    ADMIN: 2,
+    MEMBER: 1,
+  };
+
+  return (req: Request, res: Response, next: NextFunction) => {
+    const orgRole = req.organizationAccessContext?.orgRole;
+
+    if (!orgRole) {
+      res.status(403).json({ success: false, message: "No org access.", code: "ORG_ACCESS_FORBIDDEN" });
+      return;
+    }
+
+    if (hierarchy[orgRole] >= hierarchy[minimum]) {
+      next();
+      return;
+    }
+
+    res.status(403).json({ success: false, message: "Insufficient permissions.", code: "FORBIDDEN" });
   };
 }

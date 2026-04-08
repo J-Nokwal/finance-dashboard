@@ -1,6 +1,7 @@
 import { InvitationProject } from "@/generated/prisma/client";
 import { InvitationStatus, OrganizationRole, ProjectRole } from "@/generated/prisma/enums";
 import { z } from "zod";
+import { InvitationProjectWithDomain } from "./organisation.types";
 
 export const createOrganizationSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -55,6 +56,20 @@ export const inviteOrganizationMemberSchema = z.object({
     //     role: z.enum(ProjectRole,{ message: "Invalid project role" }),
     // })) 
     // cast as InvitationProject[]
-    projectInvitations: z.array(z.any()).transform((val) => val as InvitationProject[]),
+    projectInvitations: z.array(z.any()).transform((val) => val as InvitationProjectWithDomain[]),
 
+})
+
+export const revokeOrgInvitationParamSchema = z.object({
+    invitationId: z.uuidv4("Invalid invitation ID"),
+})
+export const resendOrgInvitationParamSchema = z.object({
+    invitationId: z.uuidv4("Invalid invitation ID"),
+})
+
+export const createOrganizationProjectSchema = z.object({
+    name: z.string().min(1, "Name is required"),
+})
+export const deleteOrgProjectParamSchema = z.object({
+    projectId: z.uuidv4("Invalid project ID"),
 })

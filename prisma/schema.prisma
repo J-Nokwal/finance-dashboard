@@ -1,7 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -25,9 +24,10 @@ model User {
   // relations
   authAccounts        AuthAccount[]
   organizationMembers OrganizationMember[]
-  projectMembers      ProjectMember[]
+  projectMembers      ProjectMember[] @relation("ProjectMemberUser")
+  projectsAdded       ProjectMember[] @relation("ProjectMemberAddedBy")
   sessions            AuthSession[]
-  invites              Invitation[] 
+  invites             Invitation[]
 
   @@index([email])
 }
@@ -68,23 +68,21 @@ model AuthSession {
 }
 
 model OtpCode {
-  id        String   @id @default(uuid())
+  id        String     @id @default(uuid())
   email     String
-  codeHash  String           // store hashed, never plaintext
+  codeHash  String
   purpose   OtpPurpose
   expiresAt DateTime
-  usedAt    DateTime?        // null = not yet used
-  createdAt DateTime @default(now())
+  usedAt    DateTime? // null = not yet used
+  createdAt DateTime   @default(now())
 
   @@index([email, purpose])
 }
 
-
-
 model Organization {
-  id        String   @id @default(uuid())
-  name      String
-  createdAt DateTime @default(now())
+  id          String   @id @default(uuid())
+  name        String
+  createdAt   DateTime @default(now())
   description String?
 
   members  OrganizationMember[]
@@ -92,7 +90,6 @@ model Organization {
   invites  Invitation[]
 
   deletedAt DateTime?
-
 }
 
 model OrganizationMember {
@@ -114,23 +111,36 @@ model Project {
   organizationId String
   createdAt      DateTime @default(now())
 
-  organization Organization @relation(fields: [organizationId], references: [id])
+  organization Organization        @relation(fields: [organizationId], references: [id])
   members      ProjectMember[]
-  invites       InvitationProject[]
+  invites      InvitationProject[]
 
   deletedAt DateTime?
 }
 
 model ProjectMember {
-  id        String @id @default(uuid())
-  projectId String
-  userId    String
-  projectRole      ProjectRole @default(VIEWER)
+  id          String      @id @default(uuid())
+  projectId   String
+  userId      String
+  projectRole ProjectRole @default(MEMBER)
+  addedById   String
 
   project Project @relation(fields: [projectId], references: [id])
-  user    User    @relation(fields: [userId], references: [id])
+  user    User    @relation("ProjectMemberUser", fields: [userId], references: [id])
+  addedBy User    @relation("ProjectMemberAddedBy", fields: [addedById], references: [id])
+  permissions ProjectPermission[]
 
   @@unique([projectId, userId])
+}
+model ProjectPermission {
+  id              String           @id @default(uuid())
+  projectMemberId String
+  domain          ProjectDomain    // FINANCE, SUPPORT, ANALYST
+  accessLevel     DomainAccess     // READ, WRITE, MANAGE
+
+  projectMember ProjectMember @relation(fields: [projectMemberId], references: [id], onDelete: Cascade)
+
+  @@unique([projectMemberId, domain])
 }
 
 model Invitation {
@@ -143,7 +153,7 @@ model Invitation {
 
   token String @unique
 
-  status InvitationStatus @default(PENDING)
+  status    InvitationStatus @default(PENDING)
   expiresAt DateTime
 
   createdAt DateTime @default(now())
@@ -153,7 +163,6 @@ model Invitation {
   organization Organization @relation(fields: [organizationId], references: [id])
   invitedBy    User         @relation(fields: [invitedById], references: [id])
 
-  // 👇 NEW
   orgRole OrganizationRole @default(MEMBER)
 
   projectInvites InvitationProject[]
@@ -167,12 +176,24 @@ model InvitationProject {
   invitationId String
   projectId    String
 
-  role ProjectRole @default(VIEWER)
+  role ProjectRole @default(MEMBER)
 
   invitation Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
   project    Project    @relation(fields: [projectId], references: [id])
+  domainInvites InvitationProjectDomain[]
+
 
   @@unique([invitationId, projectId])
+}
+model InvitationProjectDomain {
+  id                  String    @id @default(uuid())
+  invitationProjectId String
+  domain              ProjectDomain
+  accessLevel         DomainAccess
+
+  invitationProject InvitationProject @relation(fields: [invitationProjectId], references: [id], onDelete: Cascade)
+
+  @@unique([invitationProjectId, domain])
 }
 
 enum AuthProvider {
@@ -188,12 +209,20 @@ enum OrganizationRole {
 }
 
 enum ProjectRole {
-  OWNER
   ADMIN
-  ANALYST
-  VIEWER
+  MEMBER
+}
+enum ProjectDomain {
+  FINANCE
+  SUPPORT
+  ANALYTICS
 }
 
+enum DomainAccess {
+  READ
+  WRITE
+  MANAGE
+}
 enum InvitationStatus {
   PENDING
   ACCEPTED
@@ -201,6 +230,7 @@ enum InvitationStatus {
   EXPIRED
   REVOKED
 }
+
 enum OtpPurpose {
   LOGIN
   EMAIL_VERIFICATION

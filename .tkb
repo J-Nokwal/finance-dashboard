@@ -8,7 +8,12 @@
     },
     "9eDDfpfwx6eJEDo-mD18q": {
       "id": "9eDDfpfwx6eJEDo-mD18q",
-      "description": "can role to member on project level update \nit should include \norg owner/adminn can do anything to project\nQuestions \ncan project admin add another admin \nhow this works\nif can then one admin can add or remove admin at project level \nso conflict happens ",
+      "description": "org owner/admin to manage roles at project level",
+      "columnId": "column-todo"
+    },
+    "HC3JQYxVPzbOoQHF5RKzU": {
+      "id": "HC3JQYxVPzbOoQHF5RKzU",
+      "description": "",
       "columnId": "column-todo"
     }
   },
@@ -18,7 +23,8 @@
       "title": "To do",
       "tasksIds": [
         "fN-yqWrjgNFvV2w2LdoNh",
-        "9eDDfpfwx6eJEDo-mD18q"
+        "9eDDfpfwx6eJEDo-mD18q",
+        "HC3JQYxVPzbOoQHF5RKzU"
       ]
     },
     {

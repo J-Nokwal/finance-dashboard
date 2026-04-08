@@ -1,5 +1,4 @@
-import { Organization, Project, User } from "@/generated/prisma/client";
-import { EffectiveRole } from "../rbac/rbac";
+import { Organization, OrganizationRole, Project, ProjectRole, User } from "@/generated/prisma/client";
 import express from "express";
 
 export interface JwtAccessPayload {
@@ -14,17 +13,19 @@ export interface UserAccessContext {
   user?: User;
 }
 
-interface ProjectAccessContext {
+export interface ProjectAccessContext {
   project: Project;
   projectId: string;
-  effectiveRole: EffectiveRole;  
   organizationId: string;
+  orgRole: OrganizationRole;
+  projectRole: ProjectRole | null;
+  effectiveRole: ProjectRole;  
 }
 
-interface OrganizationAccessContext {
+export interface OrganizationAccessContext {
   organizationId: string;
   organization: Organization;
-  effectiveRole: EffectiveRole;
+  orgRole: OrganizationRole;
 }
 export type OrgRequest =  express.Request & {
   userAccessContext?: UserAccessContext;

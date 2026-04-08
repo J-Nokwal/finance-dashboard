@@ -3,6 +3,7 @@ import {
   Organization,
   Project,
   InvitationProject,
+  OrganizationMember,
 } from "@/generated/prisma/client";
 import {
   InvitationStatus,
@@ -14,9 +15,11 @@ import prisma from "@/src/core/config/prisma";
 import resendService from "@/src/core/integrations/resend/resend.service";
 import random from "@/src/utils/random";
 import {
+  InvitationProjectWithDomain,
   InvitationWithProjects,
-  OrganizationUserContext,
+  OrganizationContext,
 } from "./organisation.types";
+import { canManageOrgRole } from "@/src/core/rbac/resolver";
 
 /**
  * Creates a new organization with the given name and adds the given user as the owner.
@@ -99,7 +102,7 @@ export async function updateOrganization(
   orgId: string,
   name?: string,
   description?: string,
-) :Promise<Organization>{
+): Promise<Organization> {
   const org = await prisma.organization.update({
     where: { id: orgId },
     data: {
@@ -119,7 +122,9 @@ export async function updateOrganization(
  * @throws {Error} if the organization owner email is not found
  * @throws {Error} if the organization does not exist
  */
-export async function generateOrgDeletionOtp(organisationId: string) : Promise<string> {
+export async function generateOrgDeletionOtp(
+  organisationId: string,
+): Promise<string> {
   // 1. Get organization owner email
   const ownerOrgMember = await prisma.organizationMember.findFirst({
     where: {
@@ -182,7 +187,7 @@ export async function generateOrgDeletionOtp(organisationId: string) : Promise<s
 export async function deleteOrganization(
   orgId: string,
   otp: string,
-  otpId: string
+  otpId: string,
 ): Promise<void> {
   // 1. Get organization owner email
   const ownerOrgMember = await prisma.organizationMember.findFirst({
@@ -212,7 +217,7 @@ export async function deleteOrganization(
       usedAt: null,
       expiresAt: { gt: new Date() },
     },
-  })
+  });
   if (!validOtpRecord) {
     throw new Error("Invalid or expired OTP");
   }
@@ -253,22 +258,34 @@ export async function listOrgMembers(orgId: string) {
   return members;
 }
 
+/**
+ * Updates the role of a member in an organization.
+ * Throws an error if the current user does not have permission to change the role.
+ * Throws an error if the user to be updated is the current OWNER.
+ * @param {string} userId - the ID of the user to update
+ * @param {OrganizationRole} role - the new role of the user
+ * @param {OrganizationContext} organizationContext - the current user's organization context
+ * @returns {Promise<OrganizationMember>} the updated member
+ * @throws {Error} if the user does not have permission to change the role
+ * @throws {Error} if the user to be updated is the current OWNER
+ */
 export async function updateOrgMember(
-  orgId: string,
   userId: string,
   role: OrganizationRole,
-  crrOrgUserContext: OrganizationUserContext,
-) {
-  // Only allow changing role between MEMBER and ADMIN. OWNER role can only be assigned via ownership transfer, not directly.
-  // only OWNER can add or remove admin role
-  if (role === OrganizationRole.OWNER) {
-    throw new Error(
-      "Cannot assign OWNER role directly. Please transfer ownership instead.",
-    );
+  organizationContext: OrganizationContext,
+): Promise<OrganizationMember> {
+  if (
+    !canManageOrgRole(
+      organizationContext.organizationAccessContext.orgRole,
+      role,
+    )
+  ) {
+    throw new Error("User does not have permission to change role.");
   }
   const currentOwner = await prisma.organizationMember.findFirst({
     where: {
-      organizationId: orgId,
+      organizationId:
+        organizationContext.organizationAccessContext.organizationId,
       role: OrganizationRole.OWNER,
     },
   });
@@ -277,13 +294,11 @@ export async function updateOrgMember(
       "Cannot change role of the current OWNER. Please transfer ownership before changing role.",
     );
   }
-  if (crrOrgUserContext.effectiveRole !== OrganizationRole.ADMIN) {
-    throw new Error("Only OWNER can assign or remove ADMIN role");
-  }
   const member = await prisma.organizationMember.update({
     where: {
       userId_organizationId: {
-        organizationId: orgId,
+        organizationId:
+          organizationContext.organizationAccessContext.organizationId,
         userId,
       },
     },
@@ -292,27 +307,16 @@ export async function updateOrgMember(
   return member;
 }
 
-/**
- * Removes a member from an organization.
- * Only the current OWNER can remove ADMIN members.
- * If the user to be removed is the current OWNER, an error will be thrown.
- * @param {string} orgId - the ID of the organization to remove the member from
- * @param {string} userId - the ID of the user to remove from the organization
- * @param {OrganizationUserContext} crrOrgUserContext - the current user's organization context
- * @returns {Promise<void>} a promise resolving to void
- * @throws {Error} if the user is not a member of the organization
- * @throws {Error} if the current user is not an OWNER and is trying to remove an ADMIN member
- * @throws {Error} if the user to be removed is the current OWNER
- */
 export async function removeOrgMember(
-  orgId: string,
   userId: string,
-  crrOrgUserContext: OrganizationUserContext,
-):Promise<void> {
+  organizationContext: OrganizationContext,
+): Promise<void> {
+  const organizationId =
+    organizationContext.organizationAccessContext.organizationId;
   const orgMember = await prisma.organizationMember.findUnique({
     where: {
       userId_organizationId: {
-        organizationId: orgId,
+        organizationId: organizationId,
         userId,
       },
     },
@@ -321,14 +325,16 @@ export async function removeOrgMember(
     throw new Error("User is not a member of the organization");
   }
   if (
-    crrOrgUserContext.effectiveRole !== OrganizationRole.OWNER &&
-    orgMember.organizationRole === OrganizationRole.ADMIN
+    !canManageOrgRole(
+      organizationContext.organizationAccessContext.orgRole,
+      orgMember.organizationRole,
+    )
   ) {
-    throw new Error("Only OWNER  can remove ADMIN members");
+    throw new Error("User does not have permission to remove this member.");
   }
   const currentOwner = await prisma.organizationMember.findFirst({
     where: {
-      organizationId: orgId,
+      organizationId: organizationId,
       role: OrganizationRole.OWNER,
     },
   });
@@ -344,7 +350,7 @@ export async function removeOrgMember(
       where: {
         userId,
         project: {
-          organizationId: orgId,
+          organizationId: organizationId,
         },
       },
     });
@@ -352,7 +358,7 @@ export async function removeOrgMember(
     // 2. Remove from the org
     await tx.organizationMember.delete({
       where: {
-        userId_organizationId: { userId, organizationId: orgId },
+        userId_organizationId: { userId, organizationId: organizationId },
       },
     });
 
@@ -360,7 +366,7 @@ export async function removeOrgMember(
     await tx.invitation.updateMany({
       where: {
         email: (await prisma.user.findUnique({ where: { id: userId } }))?.email,
-        organizationId: orgId,
+        organizationId: organizationId,
         status: InvitationStatus.PENDING,
       },
       data: { status: InvitationStatus.REVOKED },
@@ -394,62 +400,67 @@ export async function listOrgInvitations(
 }
 
 export async function inviteOrgMember(
-  orgId: string,
   email: string,
   role: OrganizationRole,
-  invitedByUserId: string,
-  crrOrgUserContext: OrganizationUserContext,
-  projectInvitations?: InvitationProject[],
+  organizationContext: OrganizationContext,
+  projectInvitations?: InvitationProjectWithDomain[],
 ): Promise<Invitation> {
-  if (role === OrganizationRole.OWNER) {
-    throw new Error(
-      "Cannot assign OWNER role via invitation. Please transfer ownership after they join.",
-    );
+  const organizationId =
+    organizationContext.organizationAccessContext.organizationId;
+  const actorId = organizationContext.userAccessContext.userId;
+  const actorRole = organizationContext.organizationAccessContext.orgRole;
+  if (!canManageOrgRole(actorRole, role)) {
+    throw new Error("User does not have permission to invite for this role.");
   }
-  if (
-    crrOrgUserContext.effectiveRole != OrganizationRole.OWNER &&
-    role === OrganizationRole.ADMIN
-  ) {
-    throw new Error("Only OWNER can invite for ADMIN role");
+  const existingUser = await prisma.user.findUnique({ where: { email } });
+  if (existingUser) {
+    const existingMember = await prisma.organizationMember.findUnique({
+      where: {
+        userId_organizationId: { userId: existingUser.id, organizationId },
+      },
+    });
+    if (existingMember) throw new Error("User is already a member");
   }
 
-  const currentValidInvitation = await prisma.invitation.findMany({
-    where: {
-      organizationId: orgId,
-      email,
-      status: { in: [InvitationStatus.PENDING, InvitationStatus.ACCEPTED] },
-    },
+  const pendingInvite = await prisma.invitation.findMany({
+    where: { organizationId, email, status: InvitationStatus.PENDING },
   });
-  if (currentValidInvitation.length > 0) {
-    throw new Error("User already invited");
-  }
+  if (pendingInvite && pendingInvite.length > 0)
+    throw new Error("User already has a pending invitation");
 
   // Validate project invitations in parallel for efficiency
-  let validProjectInvites: InvitationProject[] = [];
+  let validProjectInvites: InvitationProjectWithDomain[] = [];
   if (projectInvitations && projectInvitations.length > 0) {
     const projectChecks = await Promise.all(
       projectInvitations.map((pi) =>
         prisma.project.findUnique({
-          where: { id: pi.projectId, organizationId: orgId },
+          where: { id: pi.projectId, organizationId: organizationId },
           select: { id: true },
-        })
-      )
+        }),
+      ),
     );
-    validProjectInvites = projectInvitations.filter((_, index) => projectChecks[index] !== null);
+    validProjectInvites = projectInvitations.filter(
+      (_, index) => projectChecks[index] !== null,
+    );
   }
 
   const invitation: InvitationWithProjects = await prisma.invitation.create({
     data: {
-      organizationId: orgId,
+      organizationId: organizationId,
       email,
       orgRole: role,
-      invitedById: invitedByUserId,
+      invitedById: actorId,
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
       token: random.generateRandomToken(),
       projectInvites: {
         create: validProjectInvites.map((pi) => ({
           projectId: pi.projectId,
           role: pi.role,
+          domainInvites: {
+            createMany: {
+              data: pi.domainInvites,
+            },
+          },
         })),
       },
     },
@@ -463,14 +474,30 @@ export async function inviteOrgMember(
       },
     },
   });
-  resendService.sendOrganizationInvitationEmail(email, orgId, invitation);
+  try {
+    await resendService.sendOrganizationInvitationEmail(
+      email,
+      organizationId,
+      invitation,
+    );
+  } catch (err) {
+    console.error("Failed to send invitation email:", err);
+    // invitation is already created — log and continue, don't throw
+  }
 
   return invitation;
 }
 
-export async function revokeOrgInvitation(invitationId: string) {
+export async function revokeOrgInvitation(
+  invitationId: string,
+  organizationContext: OrganizationContext,
+) {
   const invitation = await prisma.invitation.findUnique({
-    where: { id: invitationId },
+    where: {
+      id: invitationId,
+      organizationId:
+        organizationContext.organizationAccessContext.organizationId,
+    },
   });
   if (!invitation) {
     throw new Error("Invitation not found");
@@ -488,15 +515,21 @@ export async function revokeOrgInvitation(invitationId: string) {
   });
 }
 
-export async function resendOrgInvitationEmail(invitationId: string) {
+export async function resendOrgInvitationEmail(
+  invitationId: string,
+  organizationContext: OrganizationContext,
+) {
+  const organizationId =
+    organizationContext.organizationAccessContext.organizationId;
   const invitation = await prisma.invitation.findUnique({
-    where: { id: invitationId },
+    where: { id: invitationId, organizationId: organizationId },
     include: {
       projectInvites: {
         include: {
           project: {
             select: { name: true },
           },
+          domainInvites: true,
         },
       },
     },
@@ -504,12 +537,28 @@ export async function resendOrgInvitationEmail(invitationId: string) {
   if (!invitation) {
     throw new Error("Invitation not found");
   }
+  const projectInvitations = invitation.projectInvites;
   await prisma.$transaction(async (tx) => {
     // Revoke old invitation
     await tx.invitation.update({
       where: { id: invitationId },
       data: { status: InvitationStatus.REVOKED },
     });
+
+    let validProjectInvites: InvitationProjectWithDomain[] = [];
+    if (projectInvitations && projectInvitations.length > 0) {
+      const projectChecks = await Promise.all(
+        projectInvitations.map((pi) =>
+          prisma.project.findUnique({
+            where: { id: pi.projectId, organizationId: organizationId },
+            select: { id: true },
+          }),
+        ),
+      );
+      validProjectInvites = projectInvitations.filter(
+        (_, index) => projectChecks[index] !== null,
+      );
+    }
 
     // Create new invitation with same details but new token and expiry
     const newInvitation: InvitationWithProjects = await tx.invitation.create({
@@ -525,6 +574,11 @@ export async function resendOrgInvitationEmail(invitationId: string) {
             invitation.projectInvites.map((pi) => ({
               projectId: pi.projectId,
               role: pi.role,
+              domainInvites: {
+                createMany: {
+                  data: pi.domainInvites,
+                },
+              },
             })) || [],
         },
       },
@@ -558,26 +612,31 @@ export async function resendOrgInvitationEmail(invitationId: string) {
  * @returns {Promise<Project[]>} a promise resolving to an array of projects
  */
 export async function getAllOrgProjects(
-  orgId: string,
-  crrOrgUserContext: OrganizationUserContext,
-) {
-  if (crrOrgUserContext.effectiveRole === OrganizationRole.MEMBER) {
+  organizationContext: OrganizationContext,
+): Promise<Project[]> {
+  const orgId = organizationContext.organizationAccessContext.organizationId;
+  if (
+    organizationContext.organizationAccessContext.orgRole in
+    [OrganizationRole.OWNER, OrganizationRole.ADMIN]
+  ) {
+    const projects = await prisma.project.findMany({
+      where: { organizationId: orgId },
+    });
+    return projects;
+  } else {
     const projects = await prisma.project.findMany({
       where: {
         organizationId: orgId,
+        deletedAt: null,
         members: {
           some: {
-            userId: crrOrgUserContext.currentUserId,
+            userId: organizationContext.userAccessContext.userId,
           },
         },
       },
     });
     return projects;
   }
-  const projects = await prisma.project.findMany({
-    where: { organizationId: orgId },
-  });
-  return projects;
 }
 
 /**
@@ -590,20 +649,51 @@ export async function getAllOrgProjects(
  * @throws {Error} if the current user is a MEMBER
  */
 export async function createOrgProject(
-  orgId: string,
   name: string,
-  crrOrgUserContext: OrganizationUserContext,
-) {
-  if (crrOrgUserContext.effectiveRole === OrganizationRole.MEMBER) {
+  organizationContext: OrganizationContext,
+): Promise<Project> {
+  if (
+    organizationContext.organizationAccessContext.orgRole in
+    [OrganizationRole.OWNER, OrganizationRole.ADMIN]
+  ) {
+    const project = await prisma.project.create({
+      data: {
+        name,
+        organizationId:
+          organizationContext.organizationAccessContext.organizationId,
+      },
+    });
+    return project;
+  } else {
     throw new Error("MEMBER cannot create project");
   }
-  const project = await prisma.project.create({
-    data: {
-      name,
-      organizationId: orgId,
-    },
-  });
-  return project;
+}
+
+export async function deleteOrgProject(
+  projectId: string,
+  organizationContext: OrganizationContext,
+): Promise<void> {
+  const orgId = organizationContext.organizationAccessContext.organizationId;
+  await prisma.$transaction(async (tx) => {
+    const project = await prisma.project.update({
+      where: { id: projectId ,organizationId: orgId},
+      data: { deletedAt: new Date() },
+    });
+    if (!project) {
+      throw new Error("Project not found");
+    }
+    await prisma.projectMember.deleteMany({
+      where: {
+        projectId: projectId,
+      },
+    });
+    await prisma.invitationProject.deleteMany({
+      where: {
+        projectId: projectId,
+      },
+    });
+  },);
+  return;
 }
 
 // /**

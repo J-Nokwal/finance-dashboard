@@ -1,11 +1,11 @@
 import { Prisma } from "@/generated/prisma/browser";
 import { OrganizationRole, User } from "@/generated/prisma/client";
+import { OrganizationAccessContext, UserAccessContext } from "@/src/core/types/middleware.types";
 
 
-type OrganizationUserContext = {
-    organizationId?: string;
-    currentUserId?: string;
-    effectiveRole?: OrganizationRole;
+type OrganizationContext = {
+    userAccessContext: UserAccessContext;
+    organizationAccessContext: OrganizationAccessContext;
 };
 
 type InvitationWithProjects = Prisma.InvitationGetPayload<{
@@ -19,5 +19,10 @@ type InvitationWithProjects = Prisma.InvitationGetPayload<{
     };
   };
 }>;
+type InvitationProjectWithDomain = Prisma.InvitationProjectGetPayload<{
+  include: {
+    domainInvites: true;
+  };
+}>
 
-export type { InvitationWithProjects, OrganizationUserContext   };
+export type { InvitationWithProjects, OrganizationContext ,InvitationProjectWithDomain  };

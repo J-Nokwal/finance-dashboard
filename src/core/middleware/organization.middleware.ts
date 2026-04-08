@@ -1,6 +1,7 @@
-import { Request, Response, NextFunction } from "express";
+import { Response, NextFunction } from "express";
 import prisma from "../config/prisma";
 import { OrgRequest } from "../types/middleware.types";
+
 export async function loadOrganizationAccessContext(
   req: OrgRequest,
   res: Response,
@@ -14,30 +15,25 @@ export async function loadOrganizationAccessContext(
     });
     return;
   }
+
   const userId = req.userAccessContext.userId;
   const { orgId } = req.params;
-  if (orgId && typeof orgId !== "string") {
+
+  if (!orgId || typeof orgId !== "string") {
     res.status(400).json({
       success: false,
-      message: "Organization ID must be a string.",
+      message: "Organization ID is required and must be a string.",
       code: "ORG_ID_INVALID",
     });
     return;
   }
-  if (!orgId) {
-    res.status(400).json({
-      success: false,
-      message: "Organization ID is required in the URL.",
-      code: "ORG_ID_REQUIRED",
-    });
-    return;
-  }
 
-  const org = await prisma.organization.findUnique({
-    where: { id: orgId },
+  const orgMembership = await prisma.organizationMember.findUnique({
+    where: { userId_organizationId: { userId, organizationId: orgId }},
+    include: { organization: true },
   });
 
-  if (!org) {
+  if (!orgMembership || orgMembership.organization.deletedAt) {
     res.status(404).json({
       success: false,
       message: "Organization not found.",
@@ -46,27 +42,10 @@ export async function loadOrganizationAccessContext(
     return;
   }
 
-  const orgMembership = await prisma.organizationMember.findUnique({
-    where: {
-      userId_organizationId: {
-        userId,
-        organizationId: orgId,
-      },
-    },
-  });
-
-  if (!orgMembership) {
-    res.status(403).json({
-      success: false,
-      message: "You are not a member of this organization.",
-      code: "NOT_ORG_MEMBER",
-    });
-    return;
-  }
   req.organizationAccessContext = {
     organizationId: orgId,
-    organization: org,
-    effectiveRole: orgMembership.organizationRole,
-  }
+    organization: orgMembership.organization,
+    orgRole: orgMembership.organizationRole,
+  };
   next();
 }
