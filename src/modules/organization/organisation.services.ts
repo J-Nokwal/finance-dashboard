@@ -10,6 +10,7 @@ import {
   OrganizationRole,
   OtpPurpose,
   ProjectRole,
+  RecordType,
 } from "@/generated/prisma/enums";
 import prisma from "@/src/core/config/prisma";
 import resendService from "@/src/core/integrations/resend/resend.service";
@@ -652,21 +653,42 @@ export async function createOrgProject(
   name: string,
   organizationContext: OrganizationContext,
 ): Promise<Project> {
-  if (
-    organizationContext.organizationAccessContext.orgRole in
-    [OrganizationRole.OWNER, OrganizationRole.ADMIN]
-  ) {
-    const project = await prisma.project.create({
+  const orgRole = organizationContext.organizationAccessContext.orgRole;
+
+  if (!(orgRole in [OrganizationRole.OWNER, OrganizationRole.ADMIN])) {
+    throw new Error("MEMBER cannot create project");
+  }
+
+  // ✅ Use transaction (important)
+  const project = await prisma.$transaction(async (tx) => {
+    const project = await tx.project.create({
       data: {
         name,
         organizationId:
           organizationContext.organizationAccessContext.organizationId,
       },
     });
+
+    // ✅ Create default categories (both types)
+    await tx.financialRecordCategory.createMany({
+      data: [
+        {
+          name: "Uncategorised",
+          type: RecordType.INCOME,
+          projectId: project.id,
+        },
+        {
+          name: "Uncategorised",
+          type: RecordType.EXPENSE,
+          projectId: project.id,
+        },
+      ],
+    });
+
     return project;
-  } else {
-    throw new Error("MEMBER cannot create project");
-  }
+  });
+
+  return project;
 }
 
 export async function deleteOrgProject(
@@ -676,7 +698,7 @@ export async function deleteOrgProject(
   const orgId = organizationContext.organizationAccessContext.organizationId;
   await prisma.$transaction(async (tx) => {
     const project = await prisma.project.update({
-      where: { id: projectId ,organizationId: orgId},
+      where: { id: projectId, organizationId: orgId },
       data: { deletedAt: new Date() },
     });
     if (!project) {
@@ -692,7 +714,7 @@ export async function deleteOrgProject(
         projectId: projectId,
       },
     });
-  },);
+  });
   return;
 }
 

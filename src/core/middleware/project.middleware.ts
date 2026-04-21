@@ -12,7 +12,8 @@ export async function loadProjectAccessContext(
   if (req.userAccessContext === undefined) {
     res.status(401).json({
       success: false,
-      message: "Session is invalid or has been revoked. Add requireAuth middleware first.",
+      message:
+        "Session is invalid or has been revoked. Add requireAuth middleware first.",
       code: "SESSION_INVALID",
     });
     return;
@@ -95,40 +96,47 @@ export async function loadProjectAccessContext(
   next();
 }
 
-export function requireDomainAccess(domain: ProjectDomain, minimum: DomainAccess) {
+export function requireDomainAccess(
+  domain: ProjectDomain,
+  minimum: DomainAccess,
+) {
   const hierarchy: Record<DomainAccess, number> = {
-    READ:   1,
-    WRITE:  2,
+    READ: 1,
+    WRITE: 2,
     MANAGE: 3,
   };
 
   return async (req: ProjectRequest, res: Response, next: NextFunction) => {
     // org OWNER/ADMIN bypass domain checks too
-    if (req.projectAccessContext?.orgRole !== 'MEMBER' || req.projectAccessContext?.effectiveRole !== 'ADMIN') {
-      next()
-      return
+    if (req.projectAccessContext!.effectiveRole === "ADMIN") {
+      next();
+      return;
     }
 
     const membership = await prisma.projectMember.findUnique({
       where: {
         projectId_userId: {
-          projectId: req.projectAccessContext.projectId,
+          projectId: req.projectAccessContext!.projectId,
           userId: req.userAccessContext!.userId,
-        }
+        },
       },
       include: {
         permissions: {
-          where: { domain }
-        }
-      }
-    })
+          where: { domain },
+        },
+      },
+    });
 
-    const permission = membership?.permissions[0]
+    const permission = membership?.permissions[0];
 
     if (!permission || hierarchy[permission.accessLevel] < hierarchy[minimum]) {
-      res.status(403).json({ success: false, message: `Requires ${domain} ${minimum} access.`, code: "FORBIDDEN" })
-      return
+      res.status(403).json({
+        success: false,
+        message: `Requires ${domain} ${minimum} access.`,
+        code: "FORBIDDEN",
+      });
+      return;
     }
-    next()
-  }
+    next();
+  };
 }
