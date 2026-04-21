@@ -2,9 +2,6 @@ import { Link, Section } from "@react-email/components";
 import { BaseEmail } from "./BaseEmail";
 import { EmailFooter } from "./EmailFooter";
 import { EmailTitle } from "./EmailTitle";
-import { Invitation } from "@/generated/prisma/browser";
-import { Project } from "@/generated/prisma/browser";
-import { Project$invitesArgs } from "@/generated/prisma/models";
 import { InvitationWithProjects } from "@/src/modules/organization/organisation.types";
 
 export function OrganizationInvitationEmail(props: {

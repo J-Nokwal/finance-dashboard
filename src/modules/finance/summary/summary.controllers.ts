@@ -21,6 +21,59 @@ function buildFinanceContext(req: Request): FinanceContext {
   };
 }
 
+/**
+ * @swagger
+ * /api/projects/{projectId}/finance/summary:
+ *   get:
+ *     summary: Get finance summary
+ *     description: Retrieve aggregated financial summary for a project.
+ *     tags: [Summary]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: projectId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: The project ID
+ *       - in: query
+ *         name: fromDate
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *       - in: query
+ *         name: toDate
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *       - in: query
+ *         name: categoryId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: [INCOME, EXPENSE]
+ *     responses:
+ *       200:
+ *         description: Aggregated summary data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *       400:
+ *         description: Invalid query parameters
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       500:
+ *         description: Server error
+ */
 export const getSummaryController = async (
   req: Request,
   res: Response,
@@ -35,6 +88,61 @@ export const getSummaryController = async (
   res.status(200).json(result);
 };
 
+/**
+ * @swagger
+ * /api/projects/{projectId}/finance/summary/category-breakdown:
+ *   get:
+ *     summary: Get category breakdown
+ *     description: Retrieve financial totals grouped by category.
+ *     tags: [Summary]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: projectId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: The project ID
+ *       - in: query
+ *         name: fromDate
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *       - in: query
+ *         name: toDate
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *       - in: query
+ *         name: categoryId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: [INCOME, EXPENSE]
+ *     responses:
+ *       200:
+ *         description: Category breakdown data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *       400:
+ *         description: Invalid query parameters
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       500:
+ *         description: Server error
+ */
 export const getCategoryBreakdownController = async (
   req: Request,
   res: Response,
@@ -49,6 +157,71 @@ export const getCategoryBreakdownController = async (
   res.status(200).json(result);
 };
 
+/**
+ * @swagger
+ * /api/projects/{projectId}/finance/summary/trends:
+ *   get:
+ *     summary: Get finance trends
+ *     description: Retrieve time-series financial trends for a project.
+ *     tags: [Summary]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: projectId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: The project ID
+ *       - in: query
+ *         name: fromDate
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *       - in: query
+ *         name: toDate
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *       - in: query
+ *         name: categoryId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: [INCOME, EXPENSE]
+ *       - in: query
+ *         name: granularity
+ *         schema:
+ *           type: string
+ *           enum: [day, week, month]
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Number of points to return
+ *     responses:
+ *       200:
+ *         description: Time-series trend data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *       400:
+ *         description: Invalid query parameters
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       500:
+ *         description: Server error
+ */
 export const getTrendController = async (
   req: Request,
   res: Response,
@@ -63,6 +236,46 @@ export const getTrendController = async (
   res.status(200).json(result);
 };
 
+/**
+ * @swagger
+ * /api/projects/{projectId}/finance/summary/recent:
+ *   get:
+ *     summary: Get recent records
+ *     description: Retrieve recent records for a project.
+ *     tags: [Summary]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: projectId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: The project ID
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Maximum number of records to return
+ *     responses:
+ *       200:
+ *         description: Recent financial records
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *       400:
+ *         description: Invalid query parameters
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       500:
+ *         description: Server error
+ */
 export const getRecentRecordsController = async (
   req: Request,
   res: Response,
