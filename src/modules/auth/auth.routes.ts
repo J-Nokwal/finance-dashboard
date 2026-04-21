@@ -8,6 +8,7 @@ const router = Router(); // Base: /auth
 // Authentication
 
 // Providers
+
 router.post("/google",googleSignIn); // Handle Google OAuth login/register
 router.post("/email/register",emailPasswordRegister); // Register a new user with email and password
 router.post("/email/password",emailPasswordLogin); // Login with email and password

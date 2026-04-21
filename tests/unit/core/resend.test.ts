@@ -25,8 +25,7 @@
 //     ).rejects.toThrow();
 //   });
 // });
-
-import { sendLoginOtpEmail } from "../../../src/core/integrations/resend/resend.service";
+import resendService from "../../../src/core/integrations/resend/resend.service";
 import { resend } from "../../../src/core/integrations/resend/resend.client";
 
 // ✅ Mock the resend client entirely
@@ -40,7 +39,7 @@ jest.mock("../../../src/core/integrations/resend/resend.client", () => ({
 
 describe("sendLoginOtpEmail", () => {
   it("should send OTP email successfully", async () => {
-    const result = await sendLoginOtpEmail("jagritnokwal9@gmail.com", "123456");
+    const result = await resendService.sendLoginOtpEmail("jagritnokwal9@gmail.com", "123456");
     
     expect(resend.emails.send).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -57,7 +56,7 @@ describe("sendLoginOtpEmail", () => {
     );
 
     await expect(
-      sendLoginOtpEmail("invalid-email", "123456")
+      resendService.sendLoginOtpEmail("invalid-email", "123456")
     ).rejects.toThrow("Failed to send email");
   });
 });

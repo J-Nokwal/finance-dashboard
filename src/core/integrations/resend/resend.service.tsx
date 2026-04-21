@@ -14,6 +14,7 @@ type SendEmailOptions = {
   react: React.ReactElement;
 };
 
+
 const sendEmail = async ({ to, subject, react }: SendEmailOptions) => {
   try {
     const response = await resend.emails.send({

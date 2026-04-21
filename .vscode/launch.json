@@ -4,6 +4,16 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "Launch Server",
+      "program": "${workspaceFolder}/src/server.ts",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/tsx",
+      "sourceMaps": true,
+      "envFile": "${workspaceFolder}/.env.dev"
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "Node: Run File",
       "program": "${file}",
       "cwd": "${workspaceFolder}",

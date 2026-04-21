@@ -1,31 +1,27 @@
 import prisma from "@/src/core/config/prisma";
+import { Decimal } from "@prisma/client/runtime/client";
 import {
   FinanceContext,
+  FinanceRecordCreatePayload,
+  FinanceRecordUpdatePayload,
   FinanceRecordWithCategoryTags,
   GetRecordsParams,
 } from "../finance.types";
 import { convertCurrency, normalizeTagName } from "@/src/utils/helpers";
 import { Prisma } from "@/generated/prisma/browser";
-import { Decimal } from "@prisma/client/runtime/client";
 
 export async function postRecord(
-  record: FinanceRecordWithCategoryTags,
+  record: FinanceRecordCreatePayload,
   financeContext: FinanceContext,
 ): Promise<FinanceRecordWithCategoryTags> {
   const userId = financeContext.userAccessContext.userId;
   const projectId = financeContext.projectAccessContext.projectId;
-  const tagConnections: { tagId: string }[] = [];
   const baseCurrency = financeContext.projectAccessContext.project.baseCurrency;
-  const { baseAmount, exchangeRate } = await convertCurrency(
-    record.amount.toNumber(),
-    record.currency,
-    baseCurrency,
-  );
 
-  const existingCategory = await prisma.financialRecordCategory.findUnique({
+  const existingCategory = await prisma.financialRecordCategory.findFirst({
     where: {
       id: record.categoryId,
-      projectId: projectId,
+      projectId,
     },
   });
 
@@ -33,16 +29,26 @@ export async function postRecord(
     throw new Error("Category not found");
   }
 
+  const tagConnections: { tagId: string }[] = [];
+
   if (record.tags?.length) {
     for (const t of record.tags) {
-      if (t.tag?.id) {
-        tagConnections.push({ tagId: t.tag.id });
+      if (t.tagId) {
+        const existingTag = await prisma.financialRecordTag.findFirst({
+          where: {
+            id: t.tagId,
+            projectId,
+          },
+        });
+        if (!existingTag) {
+          throw new Error("Tag not found");
+        }
+        tagConnections.push({ tagId: t.tagId });
         continue;
       }
 
-      if (t.tag?.name) {
-        const normalizedName = normalizeTagName(t.tag.name);
-
+      if (t.name) {
+        const normalizedName = normalizeTagName(t.name);
         const tag = await prisma.financialRecordTag.upsert({
           where: {
             name_projectId: {
@@ -56,11 +62,17 @@ export async function postRecord(
           },
           update: {},
         });
-
         tagConnections.push({ tagId: tag.id });
       }
     }
   }
+
+  const currency = record.currency ?? "INR";
+  const { baseAmount, exchangeRate } = await convertCurrency(
+    record.amount,
+    currency,
+    baseCurrency,
+  );
 
   const newRecord = await prisma.financialRecord.create({
     data: {
@@ -71,14 +83,16 @@ export async function postRecord(
       source: record.source ?? undefined,
       description: record.description ?? undefined,
       currency: record.currency ?? "INR",
-      baseAmount: baseAmount,
-      baseCurrency: baseCurrency,
-      exchangeRate: exchangeRate,
+      baseAmount,
+      baseCurrency,
+      exchangeRate,
       projectId,
       createdByUserId: userId,
-      tags: {
-        create: tagConnections,
-      },
+      tags: tagConnections.length
+        ? {
+            create: tagConnections,
+          }
+        : undefined,
     },
     include: {
       tags: {
@@ -97,58 +111,42 @@ export async function getRecords(
   params: GetRecordsParams,
   financeContext: FinanceContext,
 ) {
-  const {
-    projectId,
-    cursor,
-    direction = "next",
-    limit = 20,
-    type,
-    categoryId,
-    fromDate,
-    toDate,
-    tags,
-    source,
-  } = params;
   if (params.projectId !== financeContext.projectAccessContext.projectId) {
     throw new Error("Unauthorized");
   }
 
-  const safeLimit = Math.min(limit, 1000);
+  const safeLimit = Math.min(params.limit ?? 20, 1000);
+  const isNext = params.direction !== "prev";
 
-  const isNext = direction === "next";
-  const cursorData: { date: Date; id: string } | undefined = cursor
-    ? decodeCursor(cursor)
+  const cursorData: { date: Date; id: string } | undefined = params.cursor
+    ? decodeCursor(params.cursor)
     : undefined;
 
-  // Build WHERE dynamically
   const where: Prisma.FinancialRecordWhereInput = {
-    projectId,
+    projectId: params.projectId,
     deletedAt: null,
-    ...(type && { type }),
-    ...(categoryId && { categoryId }),
-
-    ...(source && { source: source }),
-    ...(fromDate || toDate
+    ...(params.type && { type: params.type }),
+    ...(params.categoryId && { categoryId: params.categoryId }),
+    ...(params.source && { source: params.source }),
+    ...(params.fromDate || params.toDate
       ? {
           date: {
-            ...(fromDate && { gte: new Date(fromDate) }),
-            ...(toDate && { lte: new Date(toDate) }),
+            ...(params.fromDate && { gte: params.fromDate }),
+            ...(params.toDate && { lte: params.toDate }),
           },
         }
       : {}),
-
-    ...(tags?.length
+    ...(params.tags?.length
       ? {
           tags: {
             some: {
-              tagId: { in: tags },
+              tagId: { in: params.tags },
             },
           },
         }
       : {}),
   };
 
-  // Order (IMPORTANT: must match cursorData)
   const orderBy:
     | Prisma.FinancialRecordOrderByWithRelationInput
     | Prisma.FinancialRecordOrderByWithRelationInput[] = [
@@ -156,16 +154,16 @@ export async function getRecords(
     { id: isNext ? "desc" : "asc" },
   ];
 
-  // Cursor condition
   const cursorCondition: Prisma.FinancialRecordWhereUniqueInput | undefined =
     cursorData != null
       ? {
           date_id: {
-            date: new Date(cursorData.date),
+            date: cursorData.date,
             id: cursorData.id,
           },
         }
       : undefined;
+
   const records = await prisma.financialRecord.findMany({
     where,
     orderBy,
@@ -184,7 +182,6 @@ export async function getRecords(
     },
   });
 
-  // 🔥 Normalize order (important for prev)
   let finalRecords = records;
 
   if (!isNext) {
@@ -204,9 +201,6 @@ export async function getRecords(
           id: finalRecords[finalRecords.length - 1].id,
         }
       : null;
-  const nextCursor: string | undefined = nextCursorData
-    ? encodeCursor(nextCursorData)
-    : undefined;
 
   const prevCursorData =
     finalRecords.length > 0
@@ -215,17 +209,14 @@ export async function getRecords(
           id: finalRecords[0].id,
         }
       : null;
-  const prevCursor: string | undefined = prevCursorData
-    ? encodeCursor(prevCursorData)
-    : undefined;
 
   return {
     data: finalRecords,
     pageInfo: {
       hasNext: isNext ? hasMore : true,
       hasPrev: isNext ? true : hasMore,
-      nextCursor: nextCursor,
-      prevCursor: prevCursor,
+      nextCursor: nextCursorData ? encodeCursor(nextCursorData) : undefined,
+      prevCursor: prevCursorData ? encodeCursor(prevCursorData) : undefined,
     },
   };
 }
@@ -233,11 +224,12 @@ export async function getRecords(
 export async function getRecord(
   recordId: string,
   financeContext: FinanceContext,
-) {
-  const record = await prisma.financialRecord.findUnique({
+): Promise<FinanceRecordWithCategoryTags> {
+  const record = await prisma.financialRecord.findFirst({
     where: {
       id: recordId,
       projectId: financeContext.projectAccessContext.projectId,
+      deletedAt: null,
     },
     include: {
       category: true,
@@ -248,6 +240,7 @@ export async function getRecord(
       },
     },
   });
+
   if (!record) {
     throw new Error("Record not found");
   }
@@ -256,7 +249,7 @@ export async function getRecord(
 
 export async function updateRecord(
   recordId: string,
-  data: FinanceRecordWithCategoryTags,
+  data: FinanceRecordUpdatePayload,
   financeContext: FinanceContext,
 ): Promise<FinanceRecordWithCategoryTags> {
   const projectId = financeContext.projectAccessContext.projectId;
@@ -275,7 +268,7 @@ export async function updateRecord(
   }
 
   if (data.categoryId) {
-    const existingCategory = await prisma.financialRecordCategory.findUnique({
+    const existingCategory = await prisma.financialRecordCategory.findFirst({
       where: {
         id: data.categoryId,
         projectId,
@@ -290,31 +283,35 @@ export async function updateRecord(
   let baseAmount: number | Decimal = existingRecord.baseAmount;
   let exchangeRate: number | Decimal = existingRecord.exchangeRate;
 
-  if (data.amount || data.currency) {
-    const amount = data.amount
-      ? data.amount.toNumber()
-      : Number(existingRecord.amount);
-
-    const currency = data.currency || existingRecord.currency;
+  if (data.amount !== undefined || data.currency !== undefined) {
+    const amount = data.amount ?? Number(existingRecord.amount);
+    const currency = data.currency ?? existingRecord.currency;
 
     const conversion = await convertCurrency(amount, currency, baseCurrency);
-
     baseAmount = conversion.baseAmount;
     exchangeRate = conversion.exchangeRate;
   }
 
   const tagConnections: { tagId: string }[] = [];
 
-  if (data.tags?.length) {
+  if (data.tags) {
     for (const t of data.tags) {
-      if (t.tag?.id) {
-        tagConnections.push({ tagId: t.tag.id });
+      if (t.tagId) {
+        const existingTag = await prisma.financialRecordTag.findFirst({
+          where: {
+            id: t.tagId,
+            projectId,
+          },
+        });
+        if (!existingTag) {
+          throw new Error("Tag not found");
+        }
+        tagConnections.push({ tagId: t.tagId });
         continue;
       }
 
-      if (t.tag?.name) {
-        const normalizedName = normalizeTagName(t.tag.name);
-
+      if (t.name) {
+        const normalizedName = normalizeTagName(t.name);
         const tag = await prisma.financialRecordTag.upsert({
           where: {
             name_projectId: {
@@ -328,29 +325,25 @@ export async function updateRecord(
           },
           update: {},
         });
-
         tagConnections.push({ tagId: tag.id });
       }
     }
   }
 
-  // 5. Transaction (important for consistency)
   const updatedRecord = await prisma.$transaction(async (tx) => {
-    // Remove old tags (replace behavior)
     if (data.tags) {
       await tx.financialRecordTagMap.deleteMany({
         where: { recordId },
       });
     }
 
-    // Update record
     const record = await tx.financialRecord.update({
       where: { id: recordId },
       data: {
         amount: data.amount ?? undefined,
         type: data.type ?? undefined,
         date: data.date ?? undefined,
-        categoryId: data.categoryId !== undefined ? data.categoryId : undefined,
+        categoryId: data.categoryId ?? undefined,
         source: data.source ?? undefined,
         description: data.description ?? undefined,
         currency: data.currency ?? undefined,
@@ -375,6 +368,7 @@ export async function updateRecord(
 
     return record;
   });
+
   return updatedRecord;
 }
 
@@ -382,7 +376,6 @@ export async function deleteRecord(
   recordId: string,
   financeContext: FinanceContext,
 ): Promise<{ success: boolean }> {
-  const userId = financeContext.userAccessContext.userId;
   const projectId = financeContext.projectAccessContext.projectId;
 
   const existingRecord = await prisma.financialRecord.findFirst({
@@ -406,6 +399,7 @@ export async function deleteRecord(
 
   return { success: true };
 }
+
 function encodeCursor(cursor: { date: Date; id: string }): string {
   return Buffer.from(
     JSON.stringify({
