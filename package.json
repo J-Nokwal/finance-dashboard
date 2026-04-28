@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "npx prisma generate",
+    "build": "npx prisma generate && npx tsx scripts/generateSwagger.ts",
     "start": "node src/server.ts",
     "test": "node --experimental-vm-modules node_modules/.bin/jest",
     "lint": "eslint ."

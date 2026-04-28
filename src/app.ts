@@ -20,6 +20,10 @@ app.get("/", (req, res) => {
 
 // Swagger on "/docs"
 // app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.get("/docs-json", (req, res) => {
+  res.sendFile("swagger.json", { root: "public" });
+});
+
 app.get("/docs", (req, res) => {
   res.send(`
     <!DOCTYPE html>
@@ -42,9 +46,6 @@ app.get("/docs", (req, res) => {
   `);
 });
 
-app.get("/docs-json", (req, res) => {
-  res.json(swaggerSpec);
-});
 /**
  * @swagger
  * /health:
