@@ -1,7 +1,11 @@
 [build]
-  command = "npx prisma generate"
-  publish = "public"
-  functions = "api"
+command = "npx prisma generate"
+publish = "public"
+functions = "api"
+
+[functions]
+  node_bundler = "esbuild"
+  included_files = ["generated/**"]
 
 [[redirects]]
   from = "/*"
