@@ -1,7 +1,6 @@
 [build]
-command = "npx prisma generate"
-publish = "public"
-functions = "api"
+  command = "npx prisma generate"
+  publish = "public"
 
 [functions]
   node_bundler = "esbuild"
