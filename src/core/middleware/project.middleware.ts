@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import prisma from "../config/prisma";
 import { ProjectRequest } from "../types/middleware.types";
-import { DomainAccess, ProjectDomain } from "@/generated/prisma/enums";
 import { getEffectiveProjectRole } from "../rbac/resolver";
+import { DomainAccess, ProjectDomain } from "../../../generated/prisma/enums";
 
 export async function loadProjectAccessContext(
   req: ProjectRequest,

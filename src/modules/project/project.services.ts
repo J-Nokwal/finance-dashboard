@@ -1,11 +1,11 @@
-import prisma from "@/src/core/config/prisma";
+import prisma from "../../../src/core/config/prisma";
 import { ProjectContext } from "./project.types";
 import {
   ProjectMember,
   ProjectPermission,
   ProjectRole,
-} from "@/generated/prisma/client";
-import { canManageProjectRole } from "@/src/core/rbac/resolver";
+} from "../../../generated/prisma/client";
+import { canManageProjectRole } from "../../../src/core/rbac/resolver";
 
 export async function getProject(projectContext: ProjectContext) {
   const project = await prisma.project.findUnique({

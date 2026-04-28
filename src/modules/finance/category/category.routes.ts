@@ -1,6 +1,6 @@
-import { DomainAccess, ProjectDomain } from "@/generated/prisma/enums";
-import { requireAuth } from "@/src/core/middleware/auth.middleware";
-import { loadProjectAccessContext, requireDomainAccess } from "@/src/core/middleware/project.middleware";
+import { DomainAccess, ProjectDomain } from "../../../../generated/prisma/enums";
+import { requireAuth } from "../../../../src/core/middleware/auth.middleware";
+import { loadProjectAccessContext, requireDomainAccess } from "../../../../src/core/middleware/project.middleware";
 import { Router } from "express";
 import { deleteCategoryController, getCategoriesController, postCategoryController, updateCategoryController } from "./category.controllers";
 

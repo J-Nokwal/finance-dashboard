@@ -1,0 +1,9 @@
+[build]
+  command = "npx prisma generate"
+  publish = "public"
+  functions = "api"
+
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/index"
+  status = 200

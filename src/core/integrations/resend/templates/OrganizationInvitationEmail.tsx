@@ -2,7 +2,7 @@ import { Link, Section } from "@react-email/components";
 import { BaseEmail } from "./BaseEmail";
 import { EmailFooter } from "./EmailFooter";
 import { EmailTitle } from "./EmailTitle";
-import { InvitationWithProjects } from "@/src/modules/organization/organisation.types";
+import { InvitationWithProjects } from "../../../../modules/organization/organisation.types";
 
 export function OrganizationInvitationEmail(props: {
   organizationName: string;

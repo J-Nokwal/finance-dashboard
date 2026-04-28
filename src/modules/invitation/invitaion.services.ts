@@ -1,6 +1,6 @@
-import prisma from "@/src/core/config/prisma";
+import prisma from "../../../src/core/config/prisma";
 import { InvitationContext } from "./invitation.types";
-import { InvitationStatus } from "@/generated/prisma/enums";
+import { InvitationStatus } from "../../../generated/prisma/enums";
 
 export async function acceptInvitation(
   invitationId: string,

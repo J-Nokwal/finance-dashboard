@@ -1,25 +1,19 @@
 {
   "compilerOptions": {
-    "module": "node16", // ✅ Node/Vercel functions need CommonJS
-    "moduleResolution": "node16", // ✅ Allows extensionless imports
-    "target": "es2023",
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "strict": true,
     "esModuleInterop": true,
-    "outDir": "dist",
-    "jsx": "react-jsx", // ✅ Kept for React Email components
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "rootDir": ".",
     "skipLibCheck": true,
-    "noEmit": false, // ✅ Need to emit for Vercel build
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "incremental": true,
-    "types": ["jest"], 
+    "jsx": "react-jsx",
     "paths": {
       "@/*": ["./*"]
-    }
+    },
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "types": ["node", "jest"],
+    "noEmit": true
   },
-  "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src", "api", "tests", "generated"]
 }

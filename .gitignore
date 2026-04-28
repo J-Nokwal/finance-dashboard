@@ -9,3 +9,5 @@ node_modules
 .claude/
 .agents
 .vercel
+api/entry.js
+api/entry.js.map

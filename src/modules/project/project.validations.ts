@@ -1,6 +1,6 @@
-import { ProjectRole } from "@/generated/prisma/enums";
-import {ProjectPermission} from "@/generated/prisma/client";
 import {z} from "zod";
+import { ProjectRole } from "../../../generated/prisma/enums";
+import { ProjectPermission } from "../../../generated/prisma/client";
 export const updateProjectSchema = z.object({
     name: z.string().min(1, "Name is required"),
 });

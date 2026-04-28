@@ -1,4 +1,4 @@
-import { Currency, RecordSource, RecordType } from "@/generated/prisma/enums";
+import { Currency, RecordSource, RecordType } from "../../../../generated/prisma/enums";
 import { z } from "zod";
 
 export const createFinanceRecordSchema = z.object({

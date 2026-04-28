@@ -1,5 +1,4 @@
-import { InvitationProject } from "@/generated/prisma/client";
-import { InvitationStatus, OrganizationRole, ProjectRole } from "@/generated/prisma/enums";
+import { InvitationStatus, OrganizationRole } from "../../../generated/prisma/enums";
 import { z } from "zod";
 import { InvitationProjectWithDomain } from "./organisation.types";
 
@@ -51,11 +50,7 @@ export const listOrganizationInvitationsQuerySchema = z.object({
 export const inviteOrganizationMemberSchema = z.object({
     email: z.email("Invalid email"),
     role: z.enum(OrganizationRole,{ message: "Invalid organization role" }),
-    // projectInvitations: z.array(z.object({
-    //     projectId: z.string(),
-    //     role: z.enum(ProjectRole,{ message: "Invalid project role" }),
-    // })) 
-    // cast as InvitationProject[]
+
     projectInvitations: z.array(z.any()).transform((val) => val as InvitationProjectWithDomain[]),
 
 })

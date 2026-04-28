@@ -1,5 +1,5 @@
 import { Request,Response, NextFunction } from "express";
-import { OrganizationRole, ProjectRole } from "@/generated/prisma/enums";
+import { OrganizationRole, ProjectRole } from "../../../generated/prisma/enums";
 
 export function requireProjectRole(minimum: ProjectRole) {
   const hierarchy: Record<ProjectRole, number> = {

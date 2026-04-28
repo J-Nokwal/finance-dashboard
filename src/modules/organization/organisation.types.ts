@@ -1,6 +1,5 @@
-import { Prisma } from "@/generated/prisma/browser";
-import { OrganizationRole, User } from "@/generated/prisma/client";
-import { OrganizationAccessContext, UserAccessContext } from "@/src/core/types/middleware.types";
+import { Prisma } from "../../../generated/prisma/browser";
+import { OrganizationAccessContext, UserAccessContext } from "../../../src/core/types/middleware.types";
 
 
 type OrganizationContext = {

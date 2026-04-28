@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { RecordType } from "@/generated/prisma/enums";
+import { RecordType } from "../../../../generated/prisma/enums";
 
 const optionalDate = z.coerce.date().optional();
 

@@ -6,7 +6,7 @@ import { LoginOtp } from "./templates/LoginOtp";
 import { resend } from "./resend.client";
 import { OrganizationDeletionOtp } from "./templates/OrganizationDeletionOtp";
 import { OrganizationInvitationEmail } from "./templates/OrganizationInvitationEmail";
-import { InvitationWithProjects } from "@/src/modules/organization/organisation.types";
+import { InvitationWithProjects } from "../../../modules/organization/organisation.types";
 
 type SendEmailOptions = {
   to: string | string[];

@@ -4,23 +4,23 @@ import {
   Project,
   InvitationProject,
   OrganizationMember,
-} from "@/generated/prisma/client";
+} from "../../../generated/prisma/client";
 import {
   InvitationStatus,
   OrganizationRole,
   OtpPurpose,
   ProjectRole,
   RecordType,
-} from "@/generated/prisma/enums";
-import prisma from "@/src/core/config/prisma";
-import resendService from "@/src/core/integrations/resend/resend.service";
-import random from "@/src/utils/random";
+} from "../../../generated/prisma/enums";
+import prisma from "../../../src/core/config/prisma";
+import resendService from "../../../src/core/integrations/resend/resend.service";
+import random from "../../../src/utils/random";
 import {
   InvitationProjectWithDomain,
   InvitationWithProjects,
   OrganizationContext,
 } from "./organisation.types";
-import { canManageOrgRole } from "@/src/core/rbac/resolver";
+import { canManageOrgRole } from "../../../src/core/rbac/resolver";
 
 /**
  * Creates a new organization with the given name and adds the given user as the owner.

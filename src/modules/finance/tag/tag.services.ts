@@ -1,6 +1,6 @@
-import prisma from "@/src/core/config/prisma";
+import prisma from "../../../../src/core/config/prisma";
 import { FinanceContext } from "../finance.types";
-import { normalizeTagName } from "@/src/utils/helpers";
+import { normalizeTagName } from "../../../../src/utils/helpers";
 
 export async function createTag(
   name: string,

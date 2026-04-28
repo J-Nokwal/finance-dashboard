@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { acceptInvitationController, rejectInvitationController } from "./invitaion.controllers";
-import { requireAuth, requireSession } from "@/src/core/middleware/auth.middleware";
+import { requireAuth, requireSession } from "../../../src/core/middleware/auth.middleware";
 
 
 

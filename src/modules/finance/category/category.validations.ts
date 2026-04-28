@@ -1,4 +1,4 @@
-import { RecordType } from "@/generated/prisma/enums";
+import { RecordType } from "../../../../generated/prisma/enums";
 import { z } from "zod";
 
 export const createCategorySchema = z.object({

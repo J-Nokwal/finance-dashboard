@@ -1,6 +1,6 @@
-import prisma from "@/src/core/config/prisma";
+import prisma from "../../../../src/core/config/prisma";
 import { FinanceContext } from "../finance.types";
-import { RecordType } from "@/generated/prisma/enums";
+import { RecordType } from "../../../../generated/prisma/enums";
 
 export async function getSummary(
   financeContext: FinanceContext,

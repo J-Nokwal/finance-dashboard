@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { DomainAccess, ProjectDomain } from "@/generated/prisma/enums";
-import { requireAuth } from "@/src/core/middleware/auth.middleware";
-import { loadProjectAccessContext, requireDomainAccess } from "@/src/core/middleware/project.middleware";
+import { DomainAccess, ProjectDomain } from "../../../../generated/prisma/enums";
+import { requireAuth } from "../../../../src/core/middleware/auth.middleware";
+import { loadProjectAccessContext, requireDomainAccess } from "../../../../src/core/middleware/project.middleware";
 import { deleteTagController, getTagsController, postTagController, updateTagController } from "./tag.controllers";
 
 const router = Router(); // Base: /projects/:projectId/finance/tags

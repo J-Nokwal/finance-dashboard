@@ -1,4 +1,4 @@
-import prisma from "@/src/core/config/prisma";
+import prisma from "../../../../src/core/config/prisma";
 import { Decimal } from "@prisma/client/runtime/client";
 import {
   FinanceContext,
@@ -7,8 +7,8 @@ import {
   FinanceRecordWithCategoryTags,
   GetRecordsParams,
 } from "../finance.types";
-import { convertCurrency, normalizeTagName } from "@/src/utils/helpers";
-import { Prisma } from "@/generated/prisma/browser";
+import { convertCurrency, normalizeTagName } from "../../../../src/utils/helpers";
+import { Prisma } from "../../../../generated/prisma/browser";
 
 export async function postRecord(
   record: FinanceRecordCreatePayload,

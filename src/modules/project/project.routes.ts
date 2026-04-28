@@ -13,10 +13,10 @@ import {
 import {
   requireAuth,
   requireSession,
-} from "@/src/core/middleware/auth.middleware";
-import { loadProjectAccessContext } from "@/src/core/middleware/project.middleware";
-import { requireProjectRole } from "@/src/core/middleware/rbac.middleware";
-import { ProjectRole } from "@/generated/prisma/enums";
+} from "../../../src/core/middleware/auth.middleware";
+import { loadProjectAccessContext } from "../../../src/core/middleware/project.middleware";
+import { requireProjectRole } from "../../../src/core/middleware/rbac.middleware";
+import { ProjectRole } from "../../../generated/prisma/enums";
 
 const router = Router(); // Base: /projects
 

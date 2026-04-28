@@ -2,17 +2,16 @@ import { Router } from "express";
 import {
   requireAuth,
   requireSession,
-} from "@/src/core/middleware/auth.middleware";
+} from "../../../../src/core/middleware/auth.middleware";
 import {
   loadProjectAccessContext,
   requireDomainAccess,
-} from "@/src/core/middleware/project.middleware";
-import { requireProjectRole } from "@/src/core/middleware/rbac.middleware";
+} from "../../../../src/core/middleware/project.middleware";
 import {
   DomainAccess,
   ProjectDomain,
   ProjectRole,
-} from "@/generated/prisma/enums";
+} from "../../../../generated/prisma/enums";
 import {
   postRecordController,
   deleteRecordController,

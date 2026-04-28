@@ -1,5 +1,5 @@
-import { Prisma, RecordSource, RecordType, Currency } from "@/generated/prisma/browser";
-import { ProjectAccessContext, UserAccessContext } from "@/src/core/types/middleware.types";
+import { Prisma, RecordSource, RecordType, Currency } from "../../../generated/prisma/browser";
+import { ProjectAccessContext, UserAccessContext } from "../../../src/core/types/middleware.types";
 
 export type FinanceContext = {
   userAccessContext: UserAccessContext;

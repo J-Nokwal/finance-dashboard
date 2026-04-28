@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { getCurerntUserInvitations, getCurrentUser } from "./user.controllers";
-import { requireAuth } from "@/src/core/middleware/auth.middleware";
+import { requireAuth } from "../../../src/core/middleware/auth.middleware";
 
 
 

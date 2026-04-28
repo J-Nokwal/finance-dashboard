@@ -1,4 +1,4 @@
-import { Organization, OrganizationRole, Project, ProjectRole, User } from "@/generated/prisma/client";
+import { Organization, OrganizationRole, Project, ProjectRole, User } from "../../../generated/prisma/client";
 import express from "express";
 
 export interface JwtAccessPayload {

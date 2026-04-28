@@ -20,10 +20,10 @@ import {
 import {
   requireAuth,
   requireSession,
-} from "@/src/core/middleware/auth.middleware";
-import { loadOrganizationAccessContext } from "@/src/core/middleware/organization.middleware";
-import { OrganizationRole } from "@/generated/prisma/enums";
-import { requireOrgRole } from "@/src/core/middleware/rbac.middleware";
+} from "../../../src/core/middleware/auth.middleware";
+import { loadOrganizationAccessContext } from "../../../src/core/middleware/organization.middleware";
+import { OrganizationRole } from "../../../generated/prisma/enums";
+import { requireOrgRole } from "../../../src/core/middleware/rbac.middleware";
 
 const router = Router(); // Base: /organizations
 

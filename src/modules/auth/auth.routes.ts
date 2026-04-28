@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { sendEmailOtp, verifyEmailOtp, emailPasswordLogin, emailPasswordRegister, getSessions, googleSignIn, logoutController, refreshAccessToken, revokeSession } from "./auth.controllers";
-import { requireAuth ,requireSession} from "@/src/core/middleware/auth.middleware";
+import { requireAuth ,requireSession} from "../../../src/core/middleware/auth.middleware";
 
 
 const router = Router(); // Base: /auth

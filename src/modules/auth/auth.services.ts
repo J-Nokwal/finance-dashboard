@@ -7,7 +7,7 @@ import { AuthContext, SendOtpResponse, SessionData } from "./auth.types";
 import { OAuth2Client } from "google-auth-library";
 import bcrypt from "bcrypt";
 import resendService from "../../core/integrations/resend/resend.service";
-import random  from "@/src/utils/random";
+import random  from "../../../src/utils/random";
 const SALT_ROUNDS = 12; // cost factor — higher = slower = safer
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 

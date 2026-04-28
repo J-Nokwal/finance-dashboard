@@ -1,4 +1,4 @@
-import { OrganizationRole, ProjectRole } from "@/generated/prisma/enums";
+import { OrganizationRole, ProjectRole } from "../../../generated/prisma/enums";
 
 // - What can this user DO inside a project?
 export function getEffectiveProjectRole(
