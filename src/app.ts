@@ -18,9 +18,33 @@ app.get("/", (req, res) => {
   res.json({ message: "Welcome to the Finance Dashboard API" , status: "OK" , timestamp: new Date().toISOString(),"docs": "/docs" }); 
 });
 
-// Swagger on root "/"
-app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+// Swagger on "/docs"
+// app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.get("/docs", (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>API Docs</title>
+        <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css">
+      </head>
+      <body>
+        <div id="swagger-ui"></div>
+        <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
+        <script>
+          SwaggerUIBundle({
+            url: '/docs-json',
+            dom_id: '#swagger-ui',
+          })
+        </script>
+      </body>
+    </html>
+  `);
+});
 
+app.get("/docs-json", (req, res) => {
+  res.json(swaggerSpec);
+});
 /**
  * @swagger
  * /health:
