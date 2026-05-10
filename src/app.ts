@@ -26,6 +26,7 @@ app.get("/", (req, res) => {
  * @swagger
  * /health:
  *   get:
+ *     tags: [Health]
  *     summary: Health check API
  *     responses:
  *       200:
