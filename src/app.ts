@@ -19,9 +19,9 @@ app.get("/", (req, res) => {
 });
 
 // Swagger on "/docs"
-app.use("/docs", swaggerUi.serve, swaggerUi.setup(undefined, {
-  swaggerUrl: "/swagger.json",
-}));
+// app.use("/docs", swaggerUi.serve, swaggerUi.setup(undefined, {
+//   swaggerUrl: "/swagger.json",
+// }));
 /**
  * @swagger
  * /health:
