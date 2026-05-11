@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Finance Dashboard API — Project Description</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #0b1120;
+    --navy-mid: #121c30;
+    --navy-light: #1a2740;
+    --teal: #00c896;
+    --teal-dim: #00896a;
+    --teal-glow: rgba(0,200,150,0.12);
+    --amber: #f5a623;
+    --text: #e8ecf4;
+    --muted: #7b8eaa;
+    --border: rgba(255,255,255,0.07);
+    --font-serif: 'DM Serif Display', Georgia, serif;
+    --font-sans: 'Manrope', system-ui, sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+
+  body {
+    background: var(--navy);
+    color: var(--text);
+    font-family: var(--font-sans);
+    line-height: 1.65;
+    min-height: 100vh;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative;
+    overflow: hidden;
+    padding: 72px 48px 64px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hero-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,200,150,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,200,150,0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  .hero-glow {
+    position: absolute;
+    width: 520px; height: 520px;
+    background: radial-gradient(circle, rgba(0,200,150,0.14) 0%, transparent 70%);
+    top: -120px; right: -80px;
+    pointer-events: none;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0,200,150,0.12);
+    border: 1px solid rgba(0,200,150,0.3);
+    color: var(--teal);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 100px;
+    margin-bottom: 28px;
+  }
+
+  .badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--teal);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  h1 {
+    font-family: var(--font-serif);
+    font-size: clamp(38px, 6vw, 62px);
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    color: #fff;
+    max-width: 640px;
+    margin-bottom: 20px;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--teal);
+  }
+
+  .hero-sub {
+    font-size: 17px;
+    color: var(--muted);
+    max-width: 520px;
+    line-height: 1.7;
+    margin-bottom: 36px;
+  }
+
+  .hero-links {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--teal);
+    color: #041910;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    padding: 11px 24px;
+    border-radius: 8px;
+    letter-spacing: 0.01em;
+    transition: opacity 0.2s, transform 0.15s;
+  }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.18);
+    letter-spacing: 0.01em;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .btn-secondary:hover { border-color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.04); }
+
+  /* ── ARCHITECTURE ILLUSTRATION ── */
+  .arch-section {
+    padding: 56px 48px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 32px;
+  }
+
+  .arch-diagram {
+    width: 100%;
+    max-width: 760px;
+  }
+
+  /* ── FEATURE GRID ── */
+  .features-section {
+    padding: 56px 48px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-title {
+    font-family: var(--font-serif);
+    font-size: 28px;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+
+  .section-sub {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 36px;
+  }
+
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+  }
+
+  .feature-card {
+    background: var(--navy-mid);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .feature-card:hover {
+    border-color: rgba(0,200,150,0.25);
+    background: var(--navy-light);
+  }
+
+  .feat-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 16px;
+    font-size: 18px;
+  }
+
+  .feat-icon.teal { background: rgba(0,200,150,0.12); }
+  .feat-icon.amber { background: rgba(245,166,35,0.12); }
+  .feat-icon.blue { background: rgba(96,165,250,0.12); }
+  .feat-icon.purple { background: rgba(167,139,250,0.12); }
+
+  .feat-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+
+  .feat-desc {
+    font-size: 13.5px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* ── TECH STACK ── */
+  .stack-section {
+    padding: 56px 48px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .stack-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 28px;
+  }
+
+  .tag {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid;
+  }
+  .tag.teal { color: var(--teal); border-color: rgba(0,200,150,0.25); background: rgba(0,200,150,0.06); }
+  .tag.amber { color: var(--amber); border-color: rgba(245,166,35,0.25); background: rgba(245,166,35,0.06); }
+  .tag.slate { color: #94a3b8; border-color: rgba(148,163,184,0.2); background: rgba(148,163,184,0.05); }
+
+  /* ── DATA MODEL ── */
+  .schema-section {
+    padding: 56px 48px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .schema-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 28px;
+  }
+
+  .schema-card {
+    background: var(--navy-mid);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .schema-header {
+    padding: 10px 14px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .schema-header.teal { color: var(--teal); background: rgba(0,200,150,0.06); }
+  .schema-header.amber { color: var(--amber); background: rgba(245,166,35,0.06); }
+  .schema-header.blue { color: #60a5fa; background: rgba(96,165,250,0.06); }
+  .schema-header.purple { color: #c4b5fd; background: rgba(196,181,253,0.06); }
+  .schema-header.pink { color: #f9a8d4; background: rgba(249,168,212,0.06); }
+
+  .schema-field {
+    padding: 6px 14px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    display: flex;
+    justify-content: space-between;
+  }
+  .schema-field span { color: #475569; }
+
+  /* ── FOOTER ── */
+  .footer {
+    padding: 36px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .footer-brand {
+    font-family: var(--font-serif);
+    font-size: 18px;
+    color: #fff;
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 20px;
+  }
+
+  .footer-links a {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    letter-spacing: 0.05em;
+    transition: color 0.2s;
+  }
+  .footer-links a:hover { color: var(--teal); }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div style="position:relative;">
+    <div class="badge">REST API · v1 · Live</div>
+    <h1>Finance Dashboard<br><em>Backend API</em></h1>
+    <p class="hero-sub">
+      A production-grade multi-tenant REST API powering financial dashboards — built with
+      Node.js, TypeScript, and Prisma. Handles authentication, organizations, role-based
+      access control, project management, and invitation workflows.
+    </p>
+    <div class="hero-links">
+      <a class="btn-primary" href="https://finance-dashboard.jagritnokwal.com/api" target="_blank">
+        ↗ Live API
+      </a>
+      <a class="btn-secondary" href="https://finance-dashboard.jagritnokwal.com/docs/" target="_blank">
+        📄 Swagger Docs
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ARCHITECTURE DIAGRAM (SVG) -->
+<section class="arch-section">
+  <p class="section-label">// system architecture</p>
+  <svg class="arch-diagram" viewBox="0 0 760 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="System architecture diagram">
+    <defs>
+      <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+        <path d="M2 1L8 5L2 9" fill="none" stroke="#00c896" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </marker>
+    </defs>
+
+    <!-- Client box -->
+    <rect x="20" y="130" width="110" height="50" rx="8" fill="#121c30" stroke="#00c896" stroke-width="1" stroke-opacity="0.5"/>
+    <text x="75" y="152" text-anchor="middle" fill="#e8ecf4" font-family="Manrope,sans-serif" font-size="12" font-weight="600">Client</text>
+    <text x="75" y="168" text-anchor="middle" fill="#7b8eaa" font-family="DM Mono,monospace" font-size="10">Web / Mobile</text>
+
+    <!-- Arrow to middleware -->
+    <line x1="130" y1="155" x2="178" y2="155" stroke="#00c896" stroke-opacity="0.5" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+
+    <!-- Auth Middleware -->
+    <rect x="180" y="110" width="120" height="90" rx="8" fill="#0f1f33" stroke="rgba(0,200,150,0.3)" stroke-width="1"/>
+    <text x="240" y="134" text-anchor="middle" fill="#00c896" font-family="Manrope,sans-serif" font-size="11" font-weight="700" letter-spacing="0.04em">MIDDLEWARE</text>
+    <text x="240" y="152" text-anchor="middle" fill="#e8ecf4" font-family="Manrope,sans-serif" font-size="11.5">Auth</text>
+    <text x="240" y="168" text-anchor="middle" fill="#e8ecf4" font-family="Manrope,sans-serif" font-size="11.5">RBAC</text>
+    <text x="240" y="184" text-anchor="middle" fill="#e8ecf4" font-family="Manrope,sans-serif" font-size="11.5">Project Guard</text>
+
+    <!-- Arrow to router -->
+    <line x1="300" y1="155" x2="348" y2="155" stroke="#00c896" stroke-opacity="0.5" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+
+    <!-- Route Modules box -->
+    <rect x="350" y="60" width="130" height="190" rx="8" fill="#0f1f33" stroke="rgba(96,165,250,0.3)" stroke-width="1"/>
+    <text x="415" y="84" text-anchor="middle" fill="#60a5fa" font-family="Manrope,sans-serif" font-size="11" font-weight="700" letter-spacing="0.04em">MODULES</text>
+    <text x="415" y="106" text-anchor="middle" fill="#e8ecf4" font-family="Manrope,sans-serif" font-size="11.5">Auth</text>
+    <text x="415" y="124" text-anchor="middle" fill="#e8ecf4" font-family="Manrope,sans-serif" font-size="11.5">Users</text>
+    <text x="415" y="142" text-anchor="middle" fill="#e8ecf4" font-family="Manrope,sans-serif" font-size="11.5">Organizations</text>
+    <text x="415" y="160" text-anchor="middle" fill="#e8ecf4" font-family="Manrope,sans-serif" font-size="11.5">Projects</text>
+    <text x="415" y="178" text-anchor="middle" fill="#e8ecf4" font-family="Manrope,sans-serif" font-size="11.5">Invitations</text>
+    <text x="415" y="196" text-anchor="middle" fill="#e8ecf4" font-family="Manrope,sans-serif" font-size="11.5">Financial</text>
+    <text x="415" y="232" text-anchor="middle" fill="#7b8eaa" font-family="DM Mono,monospace" font-size="10">Controllers → Services</text>
+
+    <!-- Arrow to DB -->
+    <line x1="480" y1="155" x2="528" y2="155" stroke="#00c896" stroke-opacity="0.5" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+
+    <!-- Prisma/DB -->
+    <rect x="530" y="115" width="110" height="80" rx="8" fill="#0f1f33" stroke="rgba(245,166,35,0.3)" stroke-width="1"/>
+    <text x="585" y="140" text-anchor="middle" fill="#f5a623" font-family="Manrope,sans-serif" font-size="11" font-weight="700" letter-spacing="0.04em">PRISMA ORM</text>
+    <text x="585" y="158" text-anchor="middle" fill="#e8ecf4" font-family="Manrope,sans-serif" font-size="11.5">PostgreSQL</text>
+    <text x="585" y="176" text-anchor="middle" fill="#7b8eaa" font-family="DM Mono,monospace" font-size="10">via Neon</text>
+
+    <!-- Arrow to Email -->
+    <line x1="415" y1="250" x2="415" y2="290" stroke="#00c896" stroke-opacity="0.4" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+
+    <!-- Resend Email -->
+    <rect x="340" y="292" width="150" height="40" rx="8" fill="#0f1f33" stroke="rgba(196,181,253,0.3)" stroke-width="1"/>
+    <text x="415" y="310" text-anchor="middle" fill="#c4b5fd" font-family="Manrope,sans-serif" font-size="11" font-weight="700">RESEND</text>
+    <text x="415" y="326" text-anchor="middle" fill="#7b8eaa" font-family="DM Mono,monospace" font-size="10">Transactional Email</text>
+
+    <!-- Netlify box top -->
+    <rect x="650" y="130" width="96" height="50" rx="8" fill="#121c30" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+    <text x="698" y="152" text-anchor="middle" fill="#e8ecf4" font-family="Manrope,sans-serif" font-size="11.5" font-weight="600">Netlify</text>
+    <text x="698" y="168" text-anchor="middle" fill="#7b8eaa" font-family="DM Mono,monospace" font-size="10">Serverless</text>
+    <line x1="640" y1="155" x2="648" y2="155" stroke="rgba(255,255,255,0.2)" stroke-width="1" stroke-dasharray="3 3" marker-end="url(#arr)"/>
+
+    <!-- small JWT badge -->
+    <rect x="20" y="240" width="80" height="28" rx="6" fill="rgba(0,200,150,0.08)" stroke="rgba(0,200,150,0.25)" stroke-width="1"/>
+    <text x="60" y="258" text-anchor="middle" fill="#00c896" font-family="DM Mono,monospace" font-size="10" font-weight="500">JWT + OTP</text>
+
+    <rect x="110" y="240" width="90" height="28" rx="6" fill="rgba(245,166,35,0.08)" stroke="rgba(245,166,35,0.25)" stroke-width="1"/>
+    <text x="155" y="258" text-anchor="middle" fill="#f5a623" font-family="DM Mono,monospace" font-size="10" font-weight="500">Session Mgmt</text>
+
+    <rect x="210" y="240" width="80" height="28" rx="6" fill="rgba(96,165,250,0.08)" stroke="rgba(96,165,250,0.25)" stroke-width="1"/>
+    <text x="250" y="258" text-anchor="middle" fill="#60a5fa" font-family="DM Mono,monospace" font-size="10" font-weight="500">Google OAuth</text>
+
+    <!-- Top label -->
+    <text x="380" y="30" text-anchor="middle" fill="#7b8eaa" font-family="Manrope,sans-serif" font-size="12">Request flow</text>
+    <line x1="20" y1="38" x2="740" y2="38" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+  </svg>
+</section>
+
+<!-- FEATURES -->
+<section class="features-section">
+  <h2 class="section-title">Core capabilities</h2>
+  <p class="section-sub">Everything you need to power a multi-tenant financial platform</p>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="feat-icon teal">🔐</div>
+      <div class="feat-title">Multi-strategy Auth</div>
+      <div class="feat-desc">Email/password, one-time-password (OTP), and Google OAuth — all under one unified session management system with JWT refresh tokens.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feat-icon blue">🏢</div>
+      <div class="feat-title">Multi-tenant Organizations</div>
+      <div class="feat-desc">Full organization lifecycle with soft-delete support. Each org can hold multiple projects and members with isolated access control.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feat-icon amber">🛡️</div>
+      <div class="feat-title">Role-Based Access Control</div>
+      <div class="feat-desc">Granular RBAC at both org (Owner / Admin / Member) and project (Owner / Admin / Analyst / Viewer) levels with middleware enforcement.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feat-icon purple">📬</div>
+      <div class="feat-title">Invitation System</div>
+      <div class="feat-desc">Token-based invitations with expiry, role assignment, and project-level scoping — all delivered via transactional email through Resend.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feat-icon teal">📊</div>
+      <div class="feat-title">Project Management</div>
+      <div class="feat-desc">Nested projects within organizations with per-project membership. Soft-delete, audit trails, and member role management built in.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feat-icon blue">📖</div>
+      <div class="feat-title">Auto-generated Swagger Docs</div>
+      <div class="feat-desc">Full OpenAPI specification served at <code style="font-size:12px; color:var(--teal);">/docs</code> — explore every endpoint interactively without any extra tooling.</div>
+    </div>
+  </div>
+</section>
+
+<!-- TECH STACK -->
+<section class="stack-section">
+  <h2 class="section-title">Tech stack</h2>
+  <p class="section-sub">Chosen for type-safety, developer experience, and production reliability</p>
+  <div class="stack-row">
+    <span class="tag teal">TypeScript</span>
+    <span class="tag teal">Node.js</span>
+    <span class="tag teal">Express.js</span>
+    <span class="tag teal">Prisma ORM</span>
+    <span class="tag amber">PostgreSQL</span>
+    <span class="tag amber">JWT</span>
+    <span class="tag amber">Resend Email</span>
+    <span class="tag slate">Netlify Serverless</span>
+    <span class="tag slate">OpenAPI / Swagger</span>
+    <span class="tag slate">Vitest</span>
+    <span class="tag slate">ESLint</span>
+    <span class="tag slate">Google OAuth 2.0</span>
+  </div>
+</section>
+
+<!-- SCHEMA OVERVIEW -->
+<section class="schema-section">
+  <h2 class="section-title">Data model</h2>
+  <p class="section-sub">Key Prisma models powering the platform</p>
+  <div class="schema-grid">
+    <div class="schema-card">
+      <div class="schema-header teal">◆ User</div>
+      <div class="schema-field">id <span>uuid</span></div>
+      <div class="schema-field">email <span>unique</span></div>
+      <div class="schema-field">name / avatar <span>string?</span></div>
+      <div class="schema-field">isActive <span>bool</span></div>
+    </div>
+    <div class="schema-card">
+      <div class="schema-header amber">◆ Organization</div>
+      <div class="schema-field">id <span>uuid</span></div>
+      <div class="schema-field">name <span>string</span></div>
+      <div class="schema-field">deletedAt <span>soft-del</span></div>
+    </div>
+    <div class="schema-card">
+      <div class="schema-header blue">◆ Project</div>
+      <div class="schema-field">id <span>uuid</span></div>
+      <div class="schema-field">name <span>string</span></div>
+      <div class="schema-field">organizationId <span>fk</span></div>
+      <div class="schema-field">deletedAt <span>soft-del</span></div>
+    </div>
+    <div class="schema-card">
+      <div class="schema-header purple">◆ AuthAccount</div>
+      <div class="schema-field">provider <span>enum</span></div>
+      <div class="schema-field">providerId <span>string?</span></div>
+      <div class="schema-field">passwordHash <span>string?</span></div>
+    </div>
+    <div class="schema-card">
+      <div class="schema-header pink">◆ Invitation</div>
+      <div class="schema-field">token <span>unique</span></div>
+      <div class="schema-field">status <span>enum</span></div>
+      <div class="schema-field">orgRole <span>enum</span></div>
+      <div class="schema-field">expiresAt <span>datetime</span></div>
+    </div>
+    <div class="schema-card">
+      <div class="schema-header teal">◆ AuthSession</div>
+      <div class="schema-field">refreshToken <span>unique</span></div>
+      <div class="schema-field">userAgent <span>string?</span></div>
+      <div class="schema-field">expiresAt <span>datetime</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <span class="footer-brand">Finance Dashboard</span>
+  <div class="footer-links">
+    <a href="https://finance-dashboard.jagritnokwal.com/api">API Root ↗</a>
+    <a href="https://finance-dashboard.jagritnokwal.com/docs/">Swagger Docs ↗</a>
+  </div>
+</footer>
+
+</body>
+</html>

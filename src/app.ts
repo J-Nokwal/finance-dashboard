@@ -13,9 +13,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.get("/", (req, res) => {
-  console.log(req.path)
-  res.json({ message: "Welcome to the Finance Dashboard API" , status: "OK" , timestamp: new Date().toISOString(),"docs": "/docs" }); 
+app.get('/', function(req, res){
+res.sendFile(__dirname + '/public/index.html');
 });
 
 // Swagger on "/docs"
